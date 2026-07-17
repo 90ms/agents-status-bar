@@ -1,0 +1,22 @@
+#!/bin/zsh
+set -euo pipefail
+
+args=(--enable-swift-testing --disable-xctest)
+developer_dir=$(xcode-select -p 2>/dev/null || true)
+
+# Standalone Command Line Tools contain Testing.framework outside SwiftPM's default search path.
+if [[ "$developer_dir" == */CommandLineTools ]]; then
+    framework_dir="$developer_dir/Library/Developer/Frameworks"
+    interop_dir="$developer_dir/Library/Developer/usr/lib"
+    args+=(
+        -Xswiftc -F
+        -Xswiftc "$framework_dir"
+        -Xlinker "-F$framework_dir"
+        -Xlinker -rpath
+        -Xlinker "$framework_dir"
+        -Xlinker -rpath
+        -Xlinker "$interop_dir"
+    )
+fi
+
+swift test "${args[@]}"
