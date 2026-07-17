@@ -48,7 +48,7 @@ All quota percentages are displayed as **remaining** values (`% left`). Account 
 
 Provider CLI formats and usage endpoints are not public compatibility contracts and may change. When an account request fails, the app falls back to known local data instead of inventing a value.
 
-Active-session detection checks only the modification times of known usage files every three seconds. A session remains active for a configurable 10, 15, or 30 seconds after the latest write. While active, a waveform icon inside the macOS menu-bar label uses a system-managed effect without changing the label width. This is a local activity heuristic rather than a guarantee that a provider is generating a response. The animation can be disabled, and macOS Reduce Motion keeps the activity indicator static.
+Active-session detection checks only the modification times of known usage files every three seconds. A session remains active for a configurable 10, 15, or 30 seconds after the latest write. While active, the macOS menu-bar label alternates two fixed-width waveform frames once per second. This avoids continuous menu-bar rendering while keeping activity visible. This is a local activity heuristic rather than a guarantee that a provider is generating a response. The animation can be disabled, and macOS Reduce Motion keeps the activity indicator static.
 
 Codex account responses are cached for up to one minute during automatic refreshes. A quota reset immediately invalidates an older cached response, and the manual refresh button bypasses the provider cache so a newly reset allowance appears without the previous five-minute delay.
 

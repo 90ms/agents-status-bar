@@ -94,12 +94,14 @@ struct AgentsStatusBarApp: App {
         case .iconOnly:
             ActivityStatusIcon(
                 systemName: "chart.bar.fill",
-                isActive: self.store.hasActiveSession)
+                isActive: self.store.hasActiveSession,
+                animationFrame: self.store.activityAnimationFrame)
         case .lowestRemaining:
             let remaining = self.store.menuBarRemainingPercent
             ActivityStatusIcon(
                 systemName: self.menuBarIcon(for: remaining),
-                isActive: self.store.hasActiveSession)
+                isActive: self.store.hasActiveSession,
+                animationFrame: self.store.activityAnimationFrame)
             if let remaining {
                 Text(AppLocalization.format("app.menuRemaining", Int(remaining.rounded())))
             } else {
@@ -108,7 +110,8 @@ struct AgentsStatusBarApp: App {
         case .monthlyCost:
             ActivityStatusIcon(
                 systemName: "dollarsign.circle.fill",
-                isActive: self.store.hasActiveSession)
+                isActive: self.store.hasActiveSession,
+                animationFrame: self.store.activityAnimationFrame)
             if let cost = self.store.menuBarMonthlyCost {
                 Text(AppLocalization.format("app.menuMonthlyCost", cost))
             } else {
@@ -118,7 +121,8 @@ struct AgentsStatusBarApp: App {
             let remaining = self.store.selectedMenuBarProviderRemainingPercent
             ActivityStatusIcon(
                 systemName: self.menuBarIcon(for: remaining),
-                isActive: self.store.isActive(self.store.selectedMenuBarProviderID))
+                isActive: self.store.isActive(self.store.selectedMenuBarProviderID),
+                animationFrame: self.store.activityAnimationFrame)
             if let provider = self.store.selectedMenuBarProvider, let remaining {
                 Text(AppLocalization.format(
                     "app.menuProviderRemaining",
@@ -142,26 +146,19 @@ private struct ActivityStatusIcon: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let systemName: String
     let isActive: Bool
+    let animationFrame: Bool
 
     var body: some View {
-        Group {
-            if #available(macOS 15.0, *) {
-                Image(systemName: self.isActive ? "waveform" : self.systemName)
-                    .symbolEffect(
-                        .bounce,
-                        options: .repeating.speed(0.65),
-                        isActive: self.isActive && !self.reduceMotion)
-            } else {
-                Image(systemName: self.isActive ? "waveform" : self.systemName)
-                    .symbolEffect(
-                        .pulse,
-                        options: .repeating,
-                        isActive: self.isActive && !self.reduceMotion)
-            }
-        }
+        Image(systemName: self.activitySystemName)
             .frame(width: 14, height: 14)
             .accessibilityLabel(self.isActive
                 ? AppLocalization.string("activity.active")
                 : AppLocalization.string("activity.idle"))
+    }
+
+    private var activitySystemName: String {
+        guard self.isActive else { return self.systemName }
+        guard !self.reduceMotion else { return "waveform" }
+        return self.animationFrame ? "waveform.path.ecg" : "waveform"
     }
 }

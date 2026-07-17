@@ -18,6 +18,7 @@ final class UsageStore: ObservableObject {
     @Published private(set) var activityAnimationsEnabled: Bool
     @Published private(set) var activityWindowSeconds: Int
     @Published private(set) var providerActivities: [ProviderID: ProviderActivitySnapshot]
+    @Published private(set) var activityAnimationFrame: Bool
     @Published private(set) var launchAtLoginEnabled: Bool
     @Published private(set) var launchAtLoginMessage: String?
     @Published private(set) var historyRecords: [UsageHistoryRecord]
@@ -109,6 +110,7 @@ final class UsageStore: ObservableObject {
                 providerID: $0.descriptor.id,
                 state: .unknown))
         })
+        self.activityAnimationFrame = false
         self.launchAtLoginEnabled = launchAtLoginController.isEnabled
         self.launchAtLoginMessage = launchAtLoginController.statusMessage
         self.historyRecords = []
@@ -363,6 +365,7 @@ final class UsageStore: ObservableObject {
                     providerID: $0.descriptor.id,
                     state: .unknown))
             })
+            self.activityAnimationFrame = false
         }
     }
 
@@ -454,10 +457,24 @@ final class UsageStore: ObservableObject {
     private func startActivityLoopIfNeeded() {
         guard self.activityAnimationsEnabled, self.activityLoop == nil else { return }
         self.activityLoop = Task { [weak self] in
+            var ticksUntilActivityRefresh = 0
             while !Task.isCancelled {
-                await self?.refreshActivity()
-                try? await Task.sleep(for: .seconds(3))
+                if ticksUntilActivityRefresh == 0 {
+                    await self?.refreshActivity()
+                    ticksUntilActivityRefresh = 3
+                }
+                self?.advanceActivityAnimationFrame()
+                ticksUntilActivityRefresh -= 1
+                try? await Task.sleep(for: .seconds(1))
             }
+        }
+    }
+
+    private func advanceActivityAnimationFrame() {
+        if self.hasActiveSession {
+            self.activityAnimationFrame.toggle()
+        } else {
+            self.activityAnimationFrame = false
         }
     }
 
