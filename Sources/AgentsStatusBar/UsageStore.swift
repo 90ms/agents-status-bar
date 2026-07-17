@@ -15,11 +15,13 @@ final class UsageStore: ObservableObject {
     @Published private(set) var showsRemainingInMenuBar: Bool
     @Published private(set) var launchAtLoginEnabled: Bool
     @Published private(set) var launchAtLoginMessage: String?
+    @Published private(set) var historyRecords: [UsageHistoryRecord]
 
     private let providers: [any UsageProviding]
     private var refreshLoop: Task<Void, Never>?
     private let notificationController: UsageNotificationController
     private let launchAtLoginController: LaunchAtLoginController
+    private let historyStore: UsageHistoryStore
     private static let enabledProvidersKey = "enabledProviderIDs"
     private static let showsRemainingInMenuBarKey = "showsRemainingInMenuBar"
     private static let warningThresholdKey = "usageNotificationWarningThreshold"
@@ -30,8 +32,10 @@ final class UsageStore: ObservableObject {
         self.providers = providers
         let notificationController = UsageNotificationController()
         let launchAtLoginController = LaunchAtLoginController()
+        let historyStore = UsageHistoryStore()
         self.notificationController = notificationController
         self.launchAtLoginController = launchAtLoginController
+        self.historyStore = historyStore
         self.notificationsEnabled = notificationController.isEnabled
         self.notificationSettingsMessage = nil
         self.warningThreshold = UserDefaults.standard.object(forKey: Self.warningThresholdKey) as? Int ?? 30
@@ -40,6 +44,7 @@ final class UsageStore: ObservableObject {
             forKey: Self.showsRemainingInMenuBarKey) as? Bool ?? true
         self.launchAtLoginEnabled = launchAtLoginController.isEnabled
         self.launchAtLoginMessage = launchAtLoginController.statusMessage
+        self.historyRecords = []
         let knownIDs = Set(providers.map { $0.descriptor.id })
         let enabledIDs: Set<ProviderID>
         if let stored = UserDefaults.standard.stringArray(forKey: Self.enabledProvidersKey) {
@@ -56,6 +61,10 @@ final class UsageStore: ObservableObject {
         self.snapshots = providers
             .filter { enabledIDs.contains($0.descriptor.id) }
             .map { .loading($0.descriptor) }
+        Task { [weak self] in
+            guard let self else { return }
+            self.historyRecords = (try? await self.historyStore.records()) ?? []
+        }
     }
 
     deinit {
@@ -96,6 +105,12 @@ final class UsageStore: ObservableObject {
             criticalThreshold: self.criticalThreshold,
             enabledProviderIDs: self.notificationProviderIDs)
         self.lastRefresh = .now
+        do {
+            try await self.historyStore.record(self.snapshots, at: self.lastRefresh ?? .now)
+            self.historyRecords = try await self.historyStore.records()
+        } catch {
+            // History is an optional local enhancement and must not fail provider refreshes.
+        }
         self.isRefreshing = false
     }
 
@@ -157,6 +172,13 @@ final class UsageStore: ObservableObject {
 
     func sendTestNotification() {
         self.notificationController.sendTest()
+    }
+
+    func clearHistory() {
+        Task {
+            try? await self.historyStore.clear()
+            self.historyRecords = []
+        }
     }
 
     func setShowsRemainingInMenuBar(_ enabled: Bool) {

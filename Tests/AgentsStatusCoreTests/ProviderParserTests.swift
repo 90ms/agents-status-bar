@@ -98,6 +98,49 @@ struct ProviderParserTests {
     }
 
     @Test
+    func usageHistoryThrottlesSamplesAndPrunesOldRecords() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appending(path: UUID().uuidString, directoryHint: .isDirectory)
+        let file = directory.appending(path: "history.json")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let store = UsageHistoryStore(
+            fileURL: file,
+            retentionDays: 30,
+            minimumRecordInterval: 15 * 60)
+        let descriptor = ProviderDescriptor(
+            id: .codex,
+            displayName: "Codex",
+            shortName: "Codex",
+            systemImage: "chart.bar",
+            capabilities: .init(supportsQuotaWindows: true))
+        let snapshot = ProviderSnapshot(
+            descriptor: descriptor,
+            availability: .available,
+            source: .officialAPI,
+            quotaWindows: [
+                QuotaWindow(id: "weekly", kind: .weekly, label: "Weekly", usedPercent: 20),
+            ],
+            tokenUsage: TokenUsage(label: "Session", totalTokens: 123))
+        let start = Date(timeIntervalSince1970: 1_800_000_000)
+
+        try await store.record([snapshot], at: start)
+        try await store.record([snapshot], at: start.addingTimeInterval(5 * 60))
+        try await store.record([snapshot], at: start.addingTimeInterval(16 * 60))
+        let throttledRecords = try await store.records()
+        #expect(throttledRecords.count == 2)
+
+        try await store.record([snapshot], at: start.addingTimeInterval(31 * 24 * 60 * 60))
+        let records = try await store.records()
+        #expect(records.count == 1)
+        #expect(records[0].windows[0].remainingPercent == 80)
+        #expect(records[0].tokenTotal == 123)
+
+        let reloadedStore = UsageHistoryStore(fileURL: file)
+        let reloadedRecords = try await reloadedStore.records()
+        #expect(reloadedRecords == records)
+    }
+
+    @Test
     func claudeShowsConnectedWhenTodaySessionHasNoUsageYet() async throws {
         let temporaryHome = FileManager.default.temporaryDirectory
             .appending(path: UUID().uuidString, directoryHint: .isDirectory)

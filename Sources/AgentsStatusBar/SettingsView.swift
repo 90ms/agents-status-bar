@@ -3,6 +3,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var store: UsageStore
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         Form {
@@ -84,6 +85,15 @@ struct SettingsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+            }
+
+            Section(AppLocalization.string("history.title")) {
+                Button(AppLocalization.string("history.open")) {
+                    self.openWindow(id: "usage-history")
+                }
+                Text(AppLocalization.string("history.privacy"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Section(AppLocalization.string("settings.privacy")) {
