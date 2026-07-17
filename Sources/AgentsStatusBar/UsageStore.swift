@@ -12,7 +12,9 @@ final class UsageStore: ObservableObject {
     @Published private(set) var warningThreshold: Int
     @Published private(set) var criticalThreshold: Int
     @Published private(set) var notificationProviderIDs: Set<ProviderID>
-    @Published private(set) var showsRemainingInMenuBar: Bool
+    @Published private(set) var menuBarDisplayMode: MenuBarDisplayMode
+    @Published private(set) var selectedMenuBarProviderID: ProviderID
+    @Published private(set) var compactModeEnabled: Bool
     @Published private(set) var launchAtLoginEnabled: Bool
     @Published private(set) var launchAtLoginMessage: String?
     @Published private(set) var historyRecords: [UsageHistoryRecord]
@@ -34,7 +36,10 @@ final class UsageStore: ObservableObject {
     private let exchangeRateClient: DailyExchangeRateClient
     private let pricingCatalogClient: PricingCatalogUpdateClient
     private static let enabledProvidersKey = "enabledProviderIDs"
-    private static let showsRemainingInMenuBarKey = "showsRemainingInMenuBar"
+    private static let legacyShowsRemainingInMenuBarKey = "showsRemainingInMenuBar"
+    private static let menuBarDisplayModeKey = "menuBarDisplayMode"
+    private static let selectedMenuBarProviderIDKey = "selectedMenuBarProviderID"
+    private static let compactModeEnabledKey = "compactModeEnabled"
     private static let warningThresholdKey = "usageNotificationWarningThreshold"
     private static let criticalThresholdKey = "usageNotificationCriticalThreshold"
     private static let notificationProviderIDsKey = "usageNotificationProviderIDs"
@@ -45,6 +50,7 @@ final class UsageStore: ObservableObject {
     private static let pricingCatalogLastCheckKey = "pricingCatalogLastCheck"
 
     init(providers: [any UsageProviding] = ProviderRegistry.defaultProviders()) {
+        let knownIDs = Set(providers.map { $0.descriptor.id })
         self.providers = providers
         let notificationController = UsageNotificationController()
         let launchAtLoginController = LaunchAtLoginController()
@@ -60,8 +66,24 @@ final class UsageStore: ObservableObject {
         self.notificationSettingsMessage = nil
         self.warningThreshold = UserDefaults.standard.object(forKey: Self.warningThresholdKey) as? Int ?? 30
         self.criticalThreshold = UserDefaults.standard.object(forKey: Self.criticalThresholdKey) as? Int ?? 10
-        self.showsRemainingInMenuBar = UserDefaults.standard.object(
-            forKey: Self.showsRemainingInMenuBarKey) as? Bool ?? true
+        if let storedMode = UserDefaults.standard.string(forKey: Self.menuBarDisplayModeKey)
+            .flatMap(MenuBarDisplayMode.init(rawValue:))
+        {
+            self.menuBarDisplayMode = storedMode
+        } else if UserDefaults.standard.object(
+            forKey: Self.legacyShowsRemainingInMenuBarKey) as? Bool == false
+        {
+            self.menuBarDisplayMode = .iconOnly
+        } else {
+            self.menuBarDisplayMode = .lowestRemaining
+        }
+        let storedMenuBarProviderID = UserDefaults.standard.string(
+            forKey: Self.selectedMenuBarProviderIDKey).map(ProviderID.init(rawValue:))
+        self.selectedMenuBarProviderID = storedMenuBarProviderID
+            .flatMap { knownIDs.contains($0) ? $0 : nil }
+            ?? providers.first?.descriptor.id
+            ?? .codex
+        self.compactModeEnabled = UserDefaults.standard.bool(forKey: Self.compactModeEnabledKey)
         self.launchAtLoginEnabled = launchAtLoginController.isEnabled
         self.launchAtLoginMessage = launchAtLoginController.statusMessage
         self.historyRecords = []
@@ -81,7 +103,6 @@ final class UsageStore: ObservableObject {
         self.pricingCatalogMetadata = TokenPricingCatalog.metadata
         self.pricingCatalogSource = .bundled
         self.pricingUpdateMessage = nil
-        let knownIDs = Set(providers.map { $0.descriptor.id })
         let enabledIDs: Set<ProviderID>
         if let stored = UserDefaults.standard.stringArray(forKey: Self.enabledProvidersKey) {
             enabledIDs = Set(stored.map { ProviderID(rawValue: $0) }).intersection(knownIDs)
@@ -269,9 +290,20 @@ final class UsageStore: ObservableObject {
         Task { await self.refreshPricingCatalogIfNeeded(force: true) }
     }
 
-    func setShowsRemainingInMenuBar(_ enabled: Bool) {
-        self.showsRemainingInMenuBar = enabled
-        UserDefaults.standard.set(enabled, forKey: Self.showsRemainingInMenuBarKey)
+    func setMenuBarDisplayMode(_ mode: MenuBarDisplayMode) {
+        self.menuBarDisplayMode = mode
+        UserDefaults.standard.set(mode.rawValue, forKey: Self.menuBarDisplayModeKey)
+    }
+
+    func setSelectedMenuBarProviderID(_ id: ProviderID) {
+        guard self.descriptors.contains(where: { $0.id == id }) else { return }
+        self.selectedMenuBarProviderID = id
+        UserDefaults.standard.set(id.rawValue, forKey: Self.selectedMenuBarProviderIDKey)
+    }
+
+    func setCompactModeEnabled(_ enabled: Bool) {
+        self.compactModeEnabled = enabled
+        UserDefaults.standard.set(enabled, forKey: Self.compactModeEnabledKey)
     }
 
     func setLaunchAtLoginEnabled(_ enabled: Bool) {
@@ -286,8 +318,23 @@ final class UsageStore: ObservableObject {
     }
 
     var menuBarRemainingPercent: Double? {
-        guard self.showsRemainingInMenuBar else { return nil }
         return UsageSummary.minimumRemainingPercent(in: self.snapshots)
+    }
+
+    var selectedMenuBarProvider: ProviderDescriptor? {
+        self.descriptors.first { $0.id == self.selectedMenuBarProviderID }
+    }
+
+    var selectedMenuBarProviderRemainingPercent: Double? {
+        UsageSummary.minimumRemainingPercent(
+            in: self.snapshots,
+            for: self.selectedMenuBarProviderID)
+    }
+
+    var menuBarMonthlyCost: String? {
+        self.costDisplayCurrency.formatted(
+            amountUSD: self.monthlyEstimatedSpendUSD,
+            exchangeRate: self.exchangeRateQuote)
     }
 
     var descriptors: [ProviderDescriptor] {

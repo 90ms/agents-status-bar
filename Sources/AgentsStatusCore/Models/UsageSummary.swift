@@ -8,4 +8,11 @@ public enum UsageSummary {
             .map(\.remainingPercent)
             .min()
     }
+
+    public static func minimumRemainingPercent(
+        in snapshots: [ProviderSnapshot],
+        for providerID: ProviderID) -> Double?
+    {
+        self.minimumRemainingPercent(in: snapshots.filter { $0.id == providerID })
+    }
 }

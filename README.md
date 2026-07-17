@@ -21,7 +21,8 @@ Agents Status Bar keeps the limits you care about in one small menu:
 - 30-day local usage history with 1-day, 7-day, and 30-day charts;
 - visible data source and last successful update time;
 - configurable warning and critical alerts per provider;
-- the lowest remaining value directly in the menu bar;
+- a customizable menu-bar label: icon only, lowest remaining, monthly estimated cost, or one provider's remaining usage;
+- an optional compact popover that keeps quota essentials visible while hiding secondary detail rows;
 - Codex account, Claude Code, and Grok support;
 - one-minute refresh with a manual refresh button;
 - optional launch at login;

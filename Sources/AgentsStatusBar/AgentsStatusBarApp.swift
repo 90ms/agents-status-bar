@@ -37,7 +37,8 @@ struct AgentsStatusBarApp: App {
                         ProviderRow(
                             snapshot: snapshot,
                             costCurrency: self.store.costDisplayCurrency,
-                            exchangeRate: self.store.exchangeRateQuote)
+                            exchangeRate: self.store.exchangeRateQuote,
+                            compact: self.store.compactModeEnabled)
                     }
                 }
 
@@ -50,16 +51,10 @@ struct AgentsStatusBarApp: App {
                 }
             }
             .padding(12)
-            .frame(width: 340)
+            .frame(width: self.store.compactModeEnabled ? 300 : 340)
             .onAppear { self.store.start() }
         } label: {
-            if let remaining = self.store.menuBarRemainingPercent {
-                Image(systemName: remaining < 10 ? "exclamationmark.triangle.fill" : "chart.bar.fill")
-                Text(AppLocalization.format("app.menuRemaining", Int(remaining.rounded())))
-            } else {
-                Image(systemName: "chart.bar.fill")
-                Text(AppLocalization.string("app.menuName"))
-            }
+            self.menuBarLabel
         }
         .menuBarExtraStyle(.window)
 
@@ -76,5 +71,46 @@ struct AgentsStatusBarApp: App {
             DiagnosticsView(store: self.store)
         }
         .defaultSize(width: 680, height: 480)
+    }
+
+    @ViewBuilder
+    private var menuBarLabel: some View {
+        switch self.store.menuBarDisplayMode {
+        case .iconOnly:
+            Image(systemName: "chart.bar.fill")
+        case .lowestRemaining:
+            let remaining = self.store.menuBarRemainingPercent
+            Image(systemName: self.menuBarIcon(for: remaining))
+            if let remaining {
+                Text(AppLocalization.format("app.menuRemaining", Int(remaining.rounded())))
+            } else {
+                Text(AppLocalization.string("app.menuName"))
+            }
+        case .monthlyCost:
+            Image(systemName: "dollarsign.circle.fill")
+            if let cost = self.store.menuBarMonthlyCost {
+                Text(AppLocalization.format("app.menuMonthlyCost", cost))
+            } else {
+                Text(AppLocalization.string("app.menuName"))
+            }
+        case .selectedProvider:
+            let remaining = self.store.selectedMenuBarProviderRemainingPercent
+            Image(systemName: self.menuBarIcon(for: remaining))
+            if let provider = self.store.selectedMenuBarProvider, let remaining {
+                Text(AppLocalization.format(
+                    "app.menuProviderRemaining",
+                    provider.shortName,
+                    Int(remaining.rounded())))
+            } else if let provider = self.store.selectedMenuBarProvider {
+                Text(AppLocalization.format("app.menuProviderUnavailable", provider.shortName))
+            } else {
+                Text(AppLocalization.string("app.menuName"))
+            }
+        }
+    }
+
+    private func menuBarIcon(for remaining: Double?) -> String {
+        guard let remaining else { return "chart.bar.fill" }
+        return remaining < 10 ? "exclamationmark.triangle.fill" : "chart.bar.fill"
     }
 }

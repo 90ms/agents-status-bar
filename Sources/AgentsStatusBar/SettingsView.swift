@@ -69,12 +69,40 @@ struct SettingsView: View {
             }
 
             Section(AppLocalization.string("settings.menuBar")) {
-                Toggle(isOn: Binding(
-                    get: { self.store.showsRemainingInMenuBar },
-                    set: { self.store.setShowsRemainingInMenuBar($0) }))
+                Picker(
+                    AppLocalization.string("settings.menuBar.display"),
+                    selection: Binding(
+                        get: { self.store.menuBarDisplayMode },
+                        set: { self.store.setMenuBarDisplayMode($0) }))
                 {
-                    Text(AppLocalization.string("settings.menuBar.lowest"))
+                    ForEach(MenuBarDisplayMode.allCases) { mode in
+                        Text(mode.localizedName).tag(mode)
+                    }
                 }
+
+                if self.store.menuBarDisplayMode == .selectedProvider {
+                    Picker(
+                        AppLocalization.string("settings.menuBar.provider"),
+                        selection: Binding(
+                            get: { self.store.selectedMenuBarProviderID },
+                            set: { self.store.setSelectedMenuBarProviderID($0) }))
+                    {
+                        ForEach(self.store.descriptors) { descriptor in
+                            Text(descriptor.displayName).tag(descriptor.id)
+                        }
+                    }
+                }
+
+                Toggle(isOn: Binding(
+                    get: { self.store.compactModeEnabled },
+                    set: { self.store.setCompactModeEnabled($0) }))
+                {
+                    Text(AppLocalization.string("settings.menuBar.compact"))
+                }
+                Text(AppLocalization.string("settings.menuBar.compact.description"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
                 Toggle(isOn: Binding(
                     get: { self.store.launchAtLoginEnabled },
                     set: { self.store.setLaunchAtLoginEnabled($0) }))

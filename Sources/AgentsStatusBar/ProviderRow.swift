@@ -5,9 +5,10 @@ struct ProviderRow: View {
     let snapshot: ProviderSnapshot
     let costCurrency: CostDisplayCurrency
     let exchangeRate: ExchangeRateQuote?
+    let compact: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 9) {
+        VStack(alignment: .leading, spacing: self.compact ? 5 : 9) {
             HStack(spacing: 8) {
                 Image(systemName: self.snapshot.descriptor.systemImage)
                     .frame(width: 18)
@@ -35,7 +36,7 @@ struct ProviderRow: View {
                 }
             }
 
-            if let tokenUsage = snapshot.tokenUsage {
+            if !self.compact, let tokenUsage = snapshot.tokenUsage {
                 HStack {
                     Text(tokenUsage.label)
                     Spacer()
@@ -47,7 +48,8 @@ struct ProviderRow: View {
                 .foregroundStyle(.secondary)
             }
 
-            if let estimate = snapshot.costEstimate,
+            if !self.compact,
+               let estimate = snapshot.costEstimate,
                let formattedCost = self.formattedCost(estimate.amountUSD)
             {
                 HStack {
@@ -61,14 +63,14 @@ struct ProviderRow: View {
                 .help(estimate.modelIDs.joined(separator: ", "))
             }
 
-            if let detail = snapshot.detail {
+            if !self.compact, let detail = snapshot.detail {
                 Text(detail)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
 
-            if let source = snapshot.source {
+            if !self.compact, let source = snapshot.source {
                 HStack(spacing: 4) {
                     Text(AppLocalization.sourceName(source))
                     Spacer()
@@ -79,7 +81,7 @@ struct ProviderRow: View {
                 .foregroundStyle(.tertiary)
             }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, self.compact ? 2 : 6)
     }
 
     @ViewBuilder

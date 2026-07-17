@@ -1,6 +1,9 @@
 "app.title" = "에이전트 상태";
 "app.menuName" = "에이전트";
 "app.menuRemaining" = "에이전트 %d%%";
+"app.menuMonthlyCost" = "이번 달 %@";
+"app.menuProviderRemaining" = "%@ %d%%";
+"app.menuProviderUnavailable" = "%@ —";
 "action.refresh" = "새로고침";
 "action.settings" = "설정…";
 "action.quit" = "종료";
@@ -32,7 +35,14 @@
 "settings.notifications.test" = "테스트 알림 보내기";
 "settings.notifications.denied" = "시스템 설정에서 알림이 비활성화되어 있습니다.";
 "settings.menuBar" = "메뉴바";
-"settings.menuBar.lowest" = "가장 낮은 잔여량 표시";
+"settings.menuBar.display" = "메뉴바 표시";
+"settings.menuBar.mode.iconOnly" = "아이콘만";
+"settings.menuBar.mode.lowestRemaining" = "가장 낮은 잔여량";
+"settings.menuBar.mode.monthlyCost" = "월 예상 비용";
+"settings.menuBar.mode.selectedProvider" = "선택한 제공자 잔여량";
+"settings.menuBar.provider" = "제공자";
+"settings.menuBar.compact" = "컴팩트 팝오버";
+"settings.menuBar.compact.description" = "핵심 쿼터만 표시하고 토큰, 비용, 상세 및 출처 행을 숨깁니다.";
 "settings.launchAtLogin" = "로그인 시 실행";
 "settings.launchAtLogin.approval" = "시스템 설정 → 일반 → 로그인 항목에서 승인이 필요합니다.";
 "settings.cost.title" = "비용 추정";

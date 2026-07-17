@@ -1,6 +1,9 @@
 "app.title" = "Agents Status";
 "app.menuName" = "Agents";
 "app.menuRemaining" = "Agents %d%%";
+"app.menuMonthlyCost" = "Month %@";
+"app.menuProviderRemaining" = "%@ %d%%";
+"app.menuProviderUnavailable" = "%@ —";
 "action.refresh" = "Refresh";
 "action.settings" = "Settings…";
 "action.quit" = "Quit";
@@ -32,7 +35,14 @@
 "settings.notifications.test" = "Send Test Notification";
 "settings.notifications.denied" = "Notifications are disabled in System Settings.";
 "settings.menuBar" = "Menu Bar";
-"settings.menuBar.lowest" = "Show lowest remaining usage";
+"settings.menuBar.display" = "Menu bar label";
+"settings.menuBar.mode.iconOnly" = "Icon only";
+"settings.menuBar.mode.lowestRemaining" = "Lowest remaining";
+"settings.menuBar.mode.monthlyCost" = "Monthly estimated cost";
+"settings.menuBar.mode.selectedProvider" = "Selected provider remaining";
+"settings.menuBar.provider" = "Provider";
+"settings.menuBar.compact" = "Compact popover";
+"settings.menuBar.compact.description" = "Show quota essentials and hide token, cost, detail, and source rows.";
 "settings.launchAtLogin" = "Launch at login";
 "settings.launchAtLogin.approval" = "Approval is required in System Settings → General → Login Items.";
 "settings.cost.title" = "Cost Estimate";
