@@ -10,21 +10,28 @@ final class UsageStore: ObservableObject {
     @Published private(set) var notificationsEnabled: Bool
     @Published private(set) var notificationSettingsMessage: String?
     @Published private(set) var showsRemainingInMenuBar: Bool
+    @Published private(set) var launchAtLoginEnabled: Bool
+    @Published private(set) var launchAtLoginMessage: String?
 
     private let providers: [any UsageProviding]
     private var refreshLoop: Task<Void, Never>?
     private let notificationController: UsageNotificationController
+    private let launchAtLoginController: LaunchAtLoginController
     private static let enabledProvidersKey = "enabledProviderIDs"
     private static let showsRemainingInMenuBarKey = "showsRemainingInMenuBar"
 
     init(providers: [any UsageProviding] = ProviderRegistry.defaultProviders()) {
         self.providers = providers
         let notificationController = UsageNotificationController()
+        let launchAtLoginController = LaunchAtLoginController()
         self.notificationController = notificationController
+        self.launchAtLoginController = launchAtLoginController
         self.notificationsEnabled = notificationController.isEnabled
         self.notificationSettingsMessage = nil
         self.showsRemainingInMenuBar = UserDefaults.standard.object(
             forKey: Self.showsRemainingInMenuBarKey) as? Bool ?? true
+        self.launchAtLoginEnabled = launchAtLoginController.isEnabled
+        self.launchAtLoginMessage = launchAtLoginController.statusMessage
         let knownIDs = Set(providers.map { $0.descriptor.id })
         let enabledIDs: Set<ProviderID>
         if let stored = UserDefaults.standard.stringArray(forKey: Self.enabledProvidersKey) {
@@ -109,6 +116,17 @@ final class UsageStore: ObservableObject {
     func setShowsRemainingInMenuBar(_ enabled: Bool) {
         self.showsRemainingInMenuBar = enabled
         UserDefaults.standard.set(enabled, forKey: Self.showsRemainingInMenuBarKey)
+    }
+
+    func setLaunchAtLoginEnabled(_ enabled: Bool) {
+        do {
+            try self.launchAtLoginController.setEnabled(enabled)
+            self.launchAtLoginEnabled = self.launchAtLoginController.isEnabled
+            self.launchAtLoginMessage = self.launchAtLoginController.statusMessage
+        } catch {
+            self.launchAtLoginEnabled = self.launchAtLoginController.isEnabled
+            self.launchAtLoginMessage = error.localizedDescription
+        }
     }
 
     var menuBarRemainingPercent: Double? {

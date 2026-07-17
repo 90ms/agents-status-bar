@@ -38,6 +38,17 @@ struct SettingsView: View {
                 {
                     Text("Show lowest remaining usage")
                 }
+                Toggle(isOn: Binding(
+                    get: { self.store.launchAtLoginEnabled },
+                    set: { self.store.setLaunchAtLoginEnabled($0) }))
+                {
+                    Text("Launch at login")
+                }
+                if let message = self.store.launchAtLoginMessage {
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             Section("Privacy") {
