@@ -15,6 +15,9 @@ final class UsageStore: ObservableObject {
     @Published private(set) var menuBarDisplayMode: MenuBarDisplayMode
     @Published private(set) var selectedMenuBarProviderID: ProviderID
     @Published private(set) var compactModeEnabled: Bool
+    @Published private(set) var activityAnimationsEnabled: Bool
+    @Published private(set) var activityWindowSeconds: Int
+    @Published private(set) var providerActivities: [ProviderID: ProviderActivitySnapshot]
     @Published private(set) var launchAtLoginEnabled: Bool
     @Published private(set) var launchAtLoginMessage: String?
     @Published private(set) var historyRecords: [UsageHistoryRecord]
@@ -33,6 +36,7 @@ final class UsageStore: ObservableObject {
 
     private let providers: [any UsageProviding]
     private var refreshLoop: Task<Void, Never>?
+    private var activityLoop: Task<Void, Never>?
     private let notificationController: UsageNotificationController
     private let launchAtLoginController: LaunchAtLoginController
     private let historyStore: UsageHistoryStore
@@ -44,6 +48,9 @@ final class UsageStore: ObservableObject {
     private static let menuBarDisplayModeKey = "menuBarDisplayMode"
     private static let selectedMenuBarProviderIDKey = "selectedMenuBarProviderID"
     private static let compactModeEnabledKey = "compactModeEnabled"
+    private static let activityAnimationsEnabledKey = "activityAnimationsEnabled"
+    private static let activityWindowSecondsKey = "activityWindowSeconds"
+    private static let supportedActivityWindows = [10, 15, 30]
     private static let warningThresholdKey = "usageNotificationWarningThreshold"
     private static let criticalThresholdKey = "usageNotificationCriticalThreshold"
     private static let notificationProviderIDsKey = "usageNotificationProviderIDs"
@@ -90,6 +97,18 @@ final class UsageStore: ObservableObject {
             ?? providers.first?.descriptor.id
             ?? .codex
         self.compactModeEnabled = UserDefaults.standard.bool(forKey: Self.compactModeEnabledKey)
+        self.activityAnimationsEnabled = UserDefaults.standard.object(
+            forKey: Self.activityAnimationsEnabledKey) as? Bool ?? true
+        let storedActivityWindow = UserDefaults.standard.integer(
+            forKey: Self.activityWindowSecondsKey)
+        self.activityWindowSeconds = Self.supportedActivityWindows.contains(storedActivityWindow)
+            ? storedActivityWindow
+            : 15
+        self.providerActivities = Dictionary(uniqueKeysWithValues: providers.map {
+            ($0.descriptor.id, ProviderActivitySnapshot(
+                providerID: $0.descriptor.id,
+                state: .unknown))
+        })
         self.launchAtLoginEnabled = launchAtLoginController.isEnabled
         self.launchAtLoginMessage = launchAtLoginController.statusMessage
         self.historyRecords = []
@@ -141,16 +160,19 @@ final class UsageStore: ObservableObject {
 
     deinit {
         self.refreshLoop?.cancel()
+        self.activityLoop?.cancel()
     }
 
     func start() {
-        guard self.refreshLoop == nil else { return }
-        self.refreshLoop = Task { [weak self] in
-            while !Task.isCancelled {
-                await self?.refresh()
-                try? await Task.sleep(for: .seconds(60))
+        if self.refreshLoop == nil {
+            self.refreshLoop = Task { [weak self] in
+                while !Task.isCancelled {
+                    await self?.refresh()
+                    try? await Task.sleep(for: .seconds(60))
+                }
             }
         }
+        self.startActivityLoopIfNeeded()
     }
 
     func refresh() async {
@@ -320,6 +342,29 @@ final class UsageStore: ObservableObject {
         UserDefaults.standard.set(enabled, forKey: Self.compactModeEnabledKey)
     }
 
+    func setActivityAnimationsEnabled(_ enabled: Bool) {
+        self.activityAnimationsEnabled = enabled
+        UserDefaults.standard.set(enabled, forKey: Self.activityAnimationsEnabledKey)
+        if enabled {
+            self.startActivityLoopIfNeeded()
+        } else {
+            self.activityLoop?.cancel()
+            self.activityLoop = nil
+            self.providerActivities = Dictionary(uniqueKeysWithValues: self.providers.map {
+                ($0.descriptor.id, ProviderActivitySnapshot(
+                    providerID: $0.descriptor.id,
+                    state: .unknown))
+            })
+        }
+    }
+
+    func setActivityWindowSeconds(_ seconds: Int) {
+        guard Self.supportedActivityWindows.contains(seconds) else { return }
+        self.activityWindowSeconds = seconds
+        UserDefaults.standard.set(seconds, forKey: Self.activityWindowSecondsKey)
+        Task { await self.refreshActivity() }
+    }
+
     func setLaunchAtLoginEnabled(_ enabled: Bool) {
         do {
             try self.launchAtLoginController.setEnabled(enabled)
@@ -355,6 +400,14 @@ final class UsageStore: ObservableObject {
         self.providers.map(\.descriptor)
     }
 
+    var hasActiveSession: Bool {
+        self.providerActivities.values.contains { $0.state == .active }
+    }
+
+    func isActive(_ providerID: ProviderID) -> Bool {
+        self.providerActivities[providerID]?.state == .active
+    }
+
     var currentAppVersion: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
             ?? "0.0.0"
@@ -388,6 +441,55 @@ final class UsageStore: ObservableObject {
             budgetUSD: budgetUSD,
             spentText: spent,
             budgetText: budget)
+    }
+
+    private func startActivityLoopIfNeeded() {
+        guard self.activityAnimationsEnabled, self.activityLoop == nil else { return }
+        self.activityLoop = Task { [weak self] in
+            while !Task.isCancelled {
+                await self?.refreshActivity()
+                try? await Task.sleep(for: .seconds(3))
+            }
+        }
+    }
+
+    private func refreshActivity() async {
+        guard self.activityAnimationsEnabled else { return }
+        let now = Date.now
+        let activeWindow = TimeInterval(self.activityWindowSeconds)
+        let cutoff = now.addingTimeInterval(-activeWindow)
+        let enabledIDs = self.enabledProviderIDs
+        let activeProviders = self.providers.filter { enabledIDs.contains($0.descriptor.id) }
+        let results = await withTaskGroup(
+            of: ProviderActivitySnapshot.self,
+            returning: [ProviderActivitySnapshot].self)
+        { group in
+            for provider in activeProviders {
+                guard let activityProvider = provider as? any UsageActivityProviding else {
+                    group.addTask {
+                        ProviderActivitySnapshot(
+                            providerID: provider.descriptor.id,
+                            state: .unknown)
+                    }
+                    continue
+                }
+                group.addTask {
+                    ProviderActivityEvaluator.snapshot(
+                        providerID: activityProvider.descriptor.id,
+                        lastActivityAt: activityProvider.latestActivityDate(since: cutoff),
+                        now: now,
+                        activeWindow: activeWindow)
+                }
+            }
+            var snapshots: [ProviderActivitySnapshot] = []
+            for await snapshot in group {
+                snapshots.append(snapshot)
+            }
+            return snapshots
+        }
+        self.providerActivities = Dictionary(uniqueKeysWithValues: results.map {
+            ($0.providerID, $0)
+        })
     }
 
     private func refreshPricingCatalogIfNeeded(force: Bool = false) async {

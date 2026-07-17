@@ -1,6 +1,32 @@
 import Foundation
 
 enum LocalFiles {
+    static func latestModificationDate(
+        below root: URL,
+        modifiedAfter cutoff: Date,
+        matching predicate: (URL) -> Bool) -> Date?
+    {
+        guard let enumerator = FileManager.default.enumerator(
+            at: root,
+            includingPropertiesForKeys: [.contentModificationDateKey, .isRegularFileKey],
+            options: [.skipsHiddenFiles, .skipsPackageDescendants])
+        else { return nil }
+
+        var latest: Date?
+        for case let url as URL in enumerator where predicate(url) {
+            guard let values = try? url.resourceValues(
+                forKeys: [.contentModificationDateKey, .isRegularFileKey]),
+                values.isRegularFile == true,
+                let modifiedAt = values.contentModificationDate,
+                modifiedAt >= cutoff
+            else { continue }
+            if latest.map({ modifiedAt > $0 }) != false {
+                latest = modifiedAt
+            }
+        }
+        return latest
+    }
+
     static func newestFiles(
         below root: URL,
         named fileName: String? = nil,

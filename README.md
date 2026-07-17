@@ -22,6 +22,7 @@ Agents Status Bar keeps the limits you care about in one small menu:
 - visible data source and last successful update time;
 - configurable warning and critical alerts per provider;
 - a customizable menu-bar label: icon only, lowest remaining, monthly estimated cost, or one provider's remaining usage;
+- a pulsing menu-bar icon and per-provider activity indicator while local session files are being updated;
 - an optional compact popover that keeps quota essentials visible while hiding secondary detail rows;
 - a six-hour GitHub Releases update check with a validated cache and stable-release link;
 - Codex, Claude Code, Grok, Gemini CLI, and OpenCode support;
@@ -46,6 +47,8 @@ All quota percentages are displayed as **remaining** values (`% left`). Account 
 | OpenCode | Not locally available | All-time aggregate tokens and recorded cost | Aggregate columns in `~/.local/share/opencode/opencode*.db` |
 
 Provider CLI formats and usage endpoints are not public compatibility contracts and may change. When an account request fails, the app falls back to known local data instead of inventing a value.
+
+Active-session detection checks only the modification times of known usage files every three seconds. A session remains active for a configurable 10, 15, or 30 seconds after the latest write. This is a local activity heuristic rather than a guarantee that a provider is generating a response. The animation can be disabled, and macOS Reduce Motion keeps the activity indicator static.
 
 ## Cost estimates and exchange rates
 
@@ -155,6 +158,7 @@ The project includes fixture-based parser tests and a macOS GitHub Actions build
 - Authentication values are never logged or copied into app storage.
 - Codex and Claude usage requests reuse their CLIs' existing sign-in sessions.
 - Local parsing is restricted to known usage fields in agent session directories and OpenCode aggregate database columns.
+- Activity detection reads file modification metadata only; it does not open prompts or responses.
 - Usage history stores only aggregate percentages and token totals for 30 days in Application Support.
 - The cached exchange-rate record contains only the public rate, publication date, and check time.
 - The cached price catalog contains only public model identifiers, prices, effective dates, and official source links.

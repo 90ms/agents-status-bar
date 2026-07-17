@@ -104,6 +104,31 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
 
                 Toggle(isOn: Binding(
+                    get: { self.store.activityAnimationsEnabled },
+                    set: { self.store.setActivityAnimationsEnabled($0) }))
+                {
+                    Text(AppLocalization.string("settings.activity.enabled"))
+                }
+                if self.store.activityAnimationsEnabled {
+                    Picker(
+                        AppLocalization.string("settings.activity.window"),
+                        selection: Binding(
+                            get: { self.store.activityWindowSeconds },
+                            set: { self.store.setActivityWindowSeconds($0) }))
+                    {
+                        ForEach([10, 15, 30], id: \.self) { seconds in
+                            Text(AppLocalization.format(
+                                "settings.activity.seconds",
+                                seconds))
+                                .tag(seconds)
+                        }
+                    }
+                    Text(AppLocalization.string("settings.activity.description"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Toggle(isOn: Binding(
                     get: { self.store.launchAtLoginEnabled },
                     set: { self.store.setLaunchAtLoginEnabled($0) }))
                 {

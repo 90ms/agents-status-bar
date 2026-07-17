@@ -1,6 +1,6 @@
 import Foundation
 
-public struct ClaudeUsageProvider: UsageProviding {
+public struct ClaudeUsageProvider: UsageProviding, UsageActivityProviding {
     public let descriptor = ProviderDescriptor(
         id: .claude,
         displayName: "Claude Code",
@@ -60,6 +60,13 @@ public struct ClaudeUsageProvider: UsageProviding {
         } catch {
             return self.localFallback(files: files, aggregate: aggregate, oauthError: error)
         }
+    }
+
+    public func latestActivityDate(since cutoff: Date) -> Date? {
+        LocalFiles.latestModificationDate(
+            below: self.projectsDirectory,
+            modifiedAfter: cutoff,
+            matching: { $0.pathExtension == "jsonl" })
     }
 
     private func localFallback(

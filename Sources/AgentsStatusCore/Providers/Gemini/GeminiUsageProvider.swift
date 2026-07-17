@@ -1,6 +1,6 @@
 import Foundation
 
-public struct GeminiUsageProvider: UsageProviding {
+public struct GeminiUsageProvider: UsageProviding, UsageActivityProviding {
     public let descriptor = ProviderDescriptor(
         id: .gemini,
         displayName: "Gemini CLI",
@@ -36,6 +36,17 @@ public struct GeminiUsageProvider: UsageProviding {
             availability: .unavailable,
             source: .localSessionLog,
             detail: "No Gemini CLI session usage was found in ~/.gemini/tmp")
+    }
+
+    public func latestActivityDate(since cutoff: Date) -> Date? {
+        LocalFiles.latestModificationDate(
+            below: self.temporaryDirectory,
+            modifiedAfter: cutoff,
+            matching: { url in
+                url.pathExtension == "json"
+                    && url.lastPathComponent.hasPrefix("session-")
+                    && url.deletingLastPathComponent().lastPathComponent == "chats"
+            })
     }
 
     private func sessionFiles() -> [URL] {

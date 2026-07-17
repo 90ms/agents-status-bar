@@ -4,6 +4,8 @@
 "app.menuMonthlyCost" = "Month %@";
 "app.menuProviderRemaining" = "%@ %d%%";
 "app.menuProviderUnavailable" = "%@ —";
+"activity.active" = "Session active";
+"activity.idle" = "No active session";
 "action.refresh" = "Refresh";
 "action.settings" = "Settings…";
 "action.quit" = "Quit";
@@ -43,6 +45,10 @@
 "settings.menuBar.provider" = "Provider";
 "settings.menuBar.compact" = "Compact popover";
 "settings.menuBar.compact.description" = "Show quota essentials and hide token, cost, detail, and source rows.";
+"settings.activity.enabled" = "Animate active sessions";
+"settings.activity.window" = "Activity window";
+"settings.activity.seconds" = "%d seconds";
+"settings.activity.description" = "Checks usage-file modification times every 3 seconds. No prompt or response content is read for activity detection. Reduce Motion keeps the indicator static.";
 "settings.launchAtLogin" = "Launch at login";
 "settings.launchAtLogin.approval" = "Approval is required in System Settings → General → Login Items.";
 "settings.updates.title" = "App Updates";

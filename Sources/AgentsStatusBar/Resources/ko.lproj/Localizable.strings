@@ -4,6 +4,8 @@
 "app.menuMonthlyCost" = "이번 달 %@";
 "app.menuProviderRemaining" = "%@ %d%%";
 "app.menuProviderUnavailable" = "%@ —";
+"activity.active" = "세션 활동 중";
+"activity.idle" = "활동 중인 세션 없음";
 "action.refresh" = "새로고침";
 "action.settings" = "설정…";
 "action.quit" = "종료";
@@ -43,6 +45,10 @@
 "settings.menuBar.provider" = "제공자";
 "settings.menuBar.compact" = "컴팩트 팝오버";
 "settings.menuBar.compact.description" = "핵심 쿼터만 표시하고 토큰, 비용, 상세 및 출처 행을 숨깁니다.";
+"settings.activity.enabled" = "활동 중인 세션 애니메이션";
+"settings.activity.window" = "활동 감지 시간";
+"settings.activity.seconds" = "%d초";
+"settings.activity.description" = "3초마다 사용량 파일의 변경 시각만 확인합니다. 활동 감지를 위해 프롬프트나 응답 내용은 읽지 않습니다. 동작 줄이기 사용 시 표시는 움직이지 않습니다.";
 "settings.launchAtLogin" = "로그인 시 실행";
 "settings.launchAtLogin.approval" = "시스템 설정 → 일반 → 로그인 항목에서 승인이 필요합니다.";
 "settings.updates.title" = "앱 업데이트";

@@ -2,10 +2,12 @@ import AgentsStatusCore
 import SwiftUI
 
 struct ProviderRow: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     let snapshot: ProviderSnapshot
     let costCurrency: CostDisplayCurrency
     let exchangeRate: ExchangeRateQuote?
     let compact: Bool
+    let isActive: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: self.compact ? 5 : 9) {
@@ -14,6 +16,16 @@ struct ProviderRow: View {
                     .frame(width: 18)
                 Text(self.snapshot.descriptor.displayName)
                     .font(.headline)
+                if self.isActive {
+                    Image(systemName: "waveform")
+                        .foregroundStyle(.green)
+                        .symbolEffect(
+                            .pulse,
+                            options: .repeating,
+                            isActive: !self.reduceMotion)
+                        .help(AppLocalization.string("activity.active"))
+                        .accessibilityLabel(AppLocalization.string("activity.active"))
+                }
                 Spacer()
                 self.availabilityBadge
             }

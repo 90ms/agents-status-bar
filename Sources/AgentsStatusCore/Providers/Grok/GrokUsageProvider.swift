@@ -1,6 +1,6 @@
 import Foundation
 
-public struct GrokUsageProvider: UsageProviding {
+public struct GrokUsageProvider: UsageProviding, UsageActivityProviding {
     public let descriptor = ProviderDescriptor(
         id: .grok,
         displayName: "Grok",
@@ -52,6 +52,13 @@ public struct GrokUsageProvider: UsageProviding {
                 label: "Current context",
                 totalTokens: contextUsed),
             detail: signals.primaryModelID.map { "Latest local session · \($0)" } ?? "Latest local Grok session")
+    }
+
+    public func latestActivityDate(since cutoff: Date) -> Date? {
+        LocalFiles.latestModificationDate(
+            below: self.sessionsDirectory,
+            modifiedAfter: cutoff,
+            matching: { $0.lastPathComponent == "signals.json" })
     }
 }
 

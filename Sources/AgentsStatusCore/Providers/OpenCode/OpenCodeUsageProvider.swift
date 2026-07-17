@@ -1,6 +1,6 @@
 import Foundation
 
-public struct OpenCodeUsageProvider: UsageProviding {
+public struct OpenCodeUsageProvider: UsageProviding, UsageActivityProviding {
     public let descriptor = ProviderDescriptor(
         id: .openCode,
         displayName: "OpenCode",
@@ -46,6 +46,30 @@ public struct OpenCodeUsageProvider: UsageProviding {
                 amountUSD: max(aggregate.costUSD, 0),
                 modelIDs: []),
             detail: "All-time local sessions · \(aggregate.sessionCount) sessions")
+    }
+
+    public func latestActivityDate(since cutoff: Date) -> Date? {
+        guard let entries = try? FileManager.default.contentsOfDirectory(
+            at: self.dataDirectory,
+            includingPropertiesForKeys: [.contentModificationDateKey, .isRegularFileKey],
+            options: [.skipsHiddenFiles])
+        else { return nil }
+
+        return entries.compactMap { url -> Date? in
+            let name = url.lastPathComponent
+            let isDatabase = name == "opencode.db"
+                || (name.hasPrefix("opencode-") && name.hasSuffix(".db"))
+            let isWriteAheadLog = name == "opencode.db-wal"
+                || (name.hasPrefix("opencode-") && name.hasSuffix(".db-wal"))
+            guard isDatabase || isWriteAheadLog,
+                  let values = try? url.resourceValues(
+                      forKeys: [.contentModificationDateKey, .isRegularFileKey]),
+                  values.isRegularFile == true,
+                  let modifiedAt = values.contentModificationDate,
+                  modifiedAt >= cutoff
+            else { return nil }
+            return modifiedAt
+        }.max()
     }
 
     private func latestDatabaseURL() -> URL? {

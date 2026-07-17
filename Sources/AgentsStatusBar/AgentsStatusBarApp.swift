@@ -38,7 +38,8 @@ struct AgentsStatusBarApp: App {
                             snapshot: snapshot,
                             costCurrency: self.store.costDisplayCurrency,
                             exchangeRate: self.store.exchangeRateQuote,
-                            compact: self.store.compactModeEnabled)
+                            compact: self.store.compactModeEnabled,
+                            isActive: self.store.isActive(snapshot.id))
                     }
                 }
 
@@ -68,6 +69,7 @@ struct AgentsStatusBarApp: App {
             .onAppear { self.store.start() }
         } label: {
             self.menuBarLabel
+                .onAppear { self.store.start() }
         }
         .menuBarExtraStyle(.window)
 
@@ -90,17 +92,23 @@ struct AgentsStatusBarApp: App {
     private var menuBarLabel: some View {
         switch self.store.menuBarDisplayMode {
         case .iconOnly:
-            Image(systemName: "chart.bar.fill")
+            ActivityStatusIcon(
+                systemName: "chart.bar.fill",
+                isActive: self.store.hasActiveSession)
         case .lowestRemaining:
             let remaining = self.store.menuBarRemainingPercent
-            Image(systemName: self.menuBarIcon(for: remaining))
+            ActivityStatusIcon(
+                systemName: self.menuBarIcon(for: remaining),
+                isActive: self.store.hasActiveSession)
             if let remaining {
                 Text(AppLocalization.format("app.menuRemaining", Int(remaining.rounded())))
             } else {
                 Text(AppLocalization.string("app.menuName"))
             }
         case .monthlyCost:
-            Image(systemName: "dollarsign.circle.fill")
+            ActivityStatusIcon(
+                systemName: "dollarsign.circle.fill",
+                isActive: self.store.hasActiveSession)
             if let cost = self.store.menuBarMonthlyCost {
                 Text(AppLocalization.format("app.menuMonthlyCost", cost))
             } else {
@@ -108,7 +116,9 @@ struct AgentsStatusBarApp: App {
             }
         case .selectedProvider:
             let remaining = self.store.selectedMenuBarProviderRemainingPercent
-            Image(systemName: self.menuBarIcon(for: remaining))
+            ActivityStatusIcon(
+                systemName: self.menuBarIcon(for: remaining),
+                isActive: self.store.isActive(self.store.selectedMenuBarProviderID))
             if let provider = self.store.selectedMenuBarProvider, let remaining {
                 Text(AppLocalization.format(
                     "app.menuProviderRemaining",
@@ -125,5 +135,22 @@ struct AgentsStatusBarApp: App {
     private func menuBarIcon(for remaining: Double?) -> String {
         guard let remaining else { return "chart.bar.fill" }
         return remaining < 10 ? "exclamationmark.triangle.fill" : "chart.bar.fill"
+    }
+}
+
+private struct ActivityStatusIcon: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let systemName: String
+    let isActive: Bool
+
+    var body: some View {
+        Image(systemName: self.systemName)
+            .symbolEffect(
+                .pulse,
+                options: .repeating,
+                isActive: self.isActive && !self.reduceMotion)
+            .accessibilityLabel(self.isActive
+                ? AppLocalization.string("activity.active")
+                : AppLocalization.string("activity.idle"))
     }
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-public struct CodexUsageProvider: UsageProviding {
+public struct CodexUsageProvider: UsageProviding, UsageActivityProviding {
     public let descriptor = ProviderDescriptor(
         id: .codex,
         displayName: "Codex",
@@ -48,6 +48,13 @@ public struct CodexUsageProvider: UsageProviding {
         } catch {
             return self.localFallback(localUsage: localUsage, accountError: error)
         }
+    }
+
+    public func latestActivityDate(since cutoff: Date) -> Date? {
+        LocalFiles.latestModificationDate(
+            below: self.sessionsDirectory,
+            modifiedAfter: cutoff,
+            matching: { $0.pathExtension == "jsonl" })
     }
 
     private func latestLocalUsage() -> CodexParsedUsage? {
