@@ -18,6 +18,7 @@ final class UsageStore: ObservableObject {
     @Published private(set) var historyRecords: [UsageHistoryRecord]
     @Published private(set) var costDisplayCurrency: CostDisplayCurrency
     @Published private(set) var exchangeRateQuote: ExchangeRateQuote?
+    @Published private(set) var appLanguage: AppLanguage
 
     private let providers: [any UsageProviding]
     private var refreshLoop: Task<Void, Never>?
@@ -55,6 +56,7 @@ final class UsageStore: ObservableObject {
             forKey: Self.costDisplayCurrencyKey)
             .flatMap(CostDisplayCurrency.init(rawValue:)) ?? .defaultValue
         self.exchangeRateQuote = nil
+        self.appLanguage = .savedValue
         let knownIDs = Set(providers.map { $0.descriptor.id })
         let enabledIDs: Set<ProviderID>
         if let stored = UserDefaults.standard.stringArray(forKey: Self.enabledProvidersKey) {
@@ -198,6 +200,14 @@ final class UsageStore: ObservableObject {
         UserDefaults.standard.set(currency.rawValue, forKey: Self.costDisplayCurrencyKey)
         if currency == .krw, self.exchangeRateQuote == nil {
             Task { await self.refreshExchangeRate() }
+        }
+    }
+
+    func setAppLanguage(_ language: AppLanguage) {
+        self.appLanguage = language
+        UserDefaults.standard.set(language.rawValue, forKey: AppLanguage.defaultsKey)
+        if self.notificationSettingsMessage != nil {
+            self.notificationSettingsMessage = AppLocalization.string("settings.notifications.denied")
         }
     }
 

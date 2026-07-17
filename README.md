@@ -25,7 +25,8 @@ Agents Status Bar keeps the limits you care about in one small menu:
 - one-minute refresh with a manual refresh button;
 - optional launch at login;
 - per-provider enable/disable settings;
-- English and Korean UI selected from the macOS language preference;
+- English and Korean UI with a System, English, or Korean language setting;
+- tabbed settings for general options, alerts, usage, and privacy;
 - a provider protocol that makes adding another agent independent from the UI.
 
 All quota percentages are displayed as **remaining** values (`% left`). Account credentials are read only when a provider needs its official usage endpoint and are kept in memory. The app does not store prompts, responses, cookies, access tokens, or refresh tokens.

@@ -15,6 +15,14 @@
 "source.officialAPI" = "계정 API";
 "source.estimated" = "추정치";
 "settings.providers" = "제공자";
+"settings.tab.general" = "일반";
+"settings.tab.notifications" = "알림";
+"settings.tab.usage" = "사용량";
+"settings.tab.privacy" = "개인정보";
+"settings.language" = "언어";
+"settings.language.system" = "시스템 설정";
+"settings.language.english" = "English";
+"settings.language.korean" = "한국어";
 "settings.notifications" = "알림";
 "settings.notifications.enabled" = "사용량 부족 알림";
 "settings.notifications.warning" = "경고 기준";
