@@ -51,6 +51,17 @@ struct ProviderRow: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
+
+            if let source = snapshot.source {
+                HStack(spacing: 4) {
+                    Text(source.displayName)
+                    Spacer()
+                    Text("Updated")
+                    Text(snapshot.updatedAt, style: .relative)
+                }
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+            }
         }
         .padding(.vertical, 6)
     }

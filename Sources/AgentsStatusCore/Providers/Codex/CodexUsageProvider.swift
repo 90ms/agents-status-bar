@@ -26,7 +26,8 @@ public struct CodexUsageProvider: UsageProviding {
 
         do {
             let credentials = try self.credentialLoader.load()
-            let accountUsage = try await self.accountClient.fetch(credentials: credentials)
+            let result = try await self.accountClient.fetch(credentials: credentials)
+            let accountUsage = result.response
             let plan = accountUsage.planType?
                 .trimmingCharacters(in: .whitespacesAndNewlines)
                 .capitalized
@@ -42,7 +43,7 @@ public struct CodexUsageProvider: UsageProviding {
                 tokenUsage: localUsage?.tokenUsage,
                 credits: accountUsage.creditBalance,
                 detail: detail,
-                updatedAt: .now)
+                updatedAt: result.fetchedAt)
         } catch {
             return self.localFallback(localUsage: localUsage, accountError: error)
         }

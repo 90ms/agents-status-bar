@@ -229,20 +229,25 @@ private extension ClaudeOAuthUsageResponse.UsageWindow {
     }
 }
 
+struct ClaudeOAuthUsageResult: Sendable {
+    let response: ClaudeOAuthUsageResponse
+    let fetchedAt: Date
+}
+
 actor ClaudeOAuthUsageCache {
     static let shared = ClaudeOAuthUsageCache()
 
     private var response: ClaudeOAuthUsageResponse?
     private var fetchedAt: Date?
 
-    func value(maxAge: TimeInterval) -> ClaudeOAuthUsageResponse? {
+    func value(maxAge: TimeInterval) -> ClaudeOAuthUsageResult? {
         guard let response, let fetchedAt, Date().timeIntervalSince(fetchedAt) < maxAge else { return nil }
-        return response
+        return ClaudeOAuthUsageResult(response: response, fetchedAt: fetchedAt)
     }
 
-    func store(_ response: ClaudeOAuthUsageResponse) {
+    func store(_ response: ClaudeOAuthUsageResponse, fetchedAt: Date) {
         self.response = response
-        self.fetchedAt = .now
+        self.fetchedAt = fetchedAt
     }
 }
 
@@ -255,7 +260,7 @@ struct ClaudeOAuthUsageClient: Sendable {
         self.cache = cache
     }
 
-    func fetch(accessToken: String) async throws -> ClaudeOAuthUsageResponse {
+    func fetch(accessToken: String) async throws -> ClaudeOAuthUsageResult {
         if let cached = await cache.value(maxAge: 5 * 60) {
             return cached
         }
@@ -277,8 +282,9 @@ struct ClaudeOAuthUsageClient: Sendable {
             guard let usage = try? JSONDecoder().decode(ClaudeOAuthUsageResponse.self, from: data) else {
                 throw ClaudeOAuthUsageError.invalidResponse
             }
-            await self.cache.store(usage)
-            return usage
+            let fetchedAt = Date.now
+            await self.cache.store(usage, fetchedAt: fetchedAt)
+            return ClaudeOAuthUsageResult(response: usage, fetchedAt: fetchedAt)
         case 401:
             throw ClaudeOAuthUsageError.unauthorized
         case 429:

@@ -217,6 +217,11 @@ private extension CodexAccountUsageResponse.Window {
     }
 }
 
+struct CodexAccountUsageResult: Sendable {
+    let response: CodexAccountUsageResponse
+    let fetchedAt: Date
+}
+
 actor CodexAccountUsageCache {
     static let shared = CodexAccountUsageCache()
 
@@ -224,19 +229,19 @@ actor CodexAccountUsageCache {
     private var accountID: String?
     private var fetchedAt: Date?
 
-    func value(accountID: String?, maxAge: TimeInterval) -> CodexAccountUsageResponse? {
+    func value(accountID: String?, maxAge: TimeInterval) -> CodexAccountUsageResult? {
         guard self.accountID == accountID,
               let response,
               let fetchedAt,
               Date().timeIntervalSince(fetchedAt) < maxAge
         else { return nil }
-        return response
+        return CodexAccountUsageResult(response: response, fetchedAt: fetchedAt)
     }
 
-    func store(_ response: CodexAccountUsageResponse, accountID: String?) {
+    func store(_ response: CodexAccountUsageResponse, accountID: String?, fetchedAt: Date) {
         self.response = response
         self.accountID = accountID
-        self.fetchedAt = .now
+        self.fetchedAt = fetchedAt
     }
 }
 
@@ -249,7 +254,7 @@ struct CodexAccountUsageClient: Sendable {
         self.cache = cache
     }
 
-    func fetch(credentials: CodexAccountCredentials) async throws -> CodexAccountUsageResponse {
+    func fetch(credentials: CodexAccountCredentials) async throws -> CodexAccountUsageResult {
         if let cached = await cache.value(accountID: credentials.accountID, maxAge: 5 * 60) {
             return cached
         }
@@ -275,8 +280,9 @@ struct CodexAccountUsageClient: Sendable {
             guard let usage = try? JSONDecoder().decode(CodexAccountUsageResponse.self, from: data) else {
                 throw CodexAccountUsageError.invalidResponse
             }
-            await self.cache.store(usage, accountID: credentials.accountID)
-            return usage
+            let fetchedAt = Date.now
+            await self.cache.store(usage, accountID: credentials.accountID, fetchedAt: fetchedAt)
+            return CodexAccountUsageResult(response: usage, fetchedAt: fetchedAt)
         case 401, 403:
             throw CodexAccountUsageError.unauthorized
         case 429:

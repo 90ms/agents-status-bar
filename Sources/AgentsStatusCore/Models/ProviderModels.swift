@@ -73,6 +73,15 @@ public enum UsageDataSource: String, Codable, Hashable, Sendable {
     case localProtocol
     case officialAPI
     case estimated
+
+    public var displayName: String {
+        switch self {
+        case .localSessionLog: "Local session"
+        case .localProtocol: "Local protocol"
+        case .officialAPI: "Account API"
+        case .estimated: "Estimated"
+        }
+    }
 }
 
 public enum QuotaWindowKind: String, Codable, Hashable, Sendable {

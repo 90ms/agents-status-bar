@@ -40,7 +40,8 @@ public struct ClaudeUsageProvider: UsageProviding {
 
         do {
             let credentials = try self.credentialLoader.load()
-            let oauthUsage = try await self.oauthClient.fetch(accessToken: credentials.accessToken)
+            let result = try await self.oauthClient.fetch(accessToken: credentials.accessToken)
+            let oauthUsage = result.response
             let plan = credentials.subscriptionType ?? credentials.rateLimitTier
             let detail = [plan, "Claude Code OAuth"]
                 .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -52,7 +53,8 @@ public struct ClaudeUsageProvider: UsageProviding {
                 source: .officialAPI,
                 quotaWindows: oauthUsage.quotaWindows(),
                 tokenUsage: localTokenUsage,
-                detail: detail.isEmpty ? "Claude Code OAuth" : detail)
+                detail: detail.isEmpty ? "Claude Code OAuth" : detail,
+                updatedAt: result.fetchedAt)
         } catch {
             return self.localFallback(files: files, usage: usage, oauthError: error)
         }
