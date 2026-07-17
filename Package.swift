@@ -18,6 +18,7 @@ let package = Package(
         .executableTarget(
             name: "AgentsStatusBar",
             dependencies: ["AgentsStatusCore"],
+            exclude: ["Resources"],
             swiftSettings: [.enableUpcomingFeature("StrictConcurrency")]),
         .testTarget(
             name: "AgentsStatusCoreTests",

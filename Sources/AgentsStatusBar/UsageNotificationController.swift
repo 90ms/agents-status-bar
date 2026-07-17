@@ -50,8 +50,11 @@ final class UsageNotificationController: NSObject, UNUserNotificationCenterDeleg
 
         for candidate in candidates {
             let content = UNMutableNotificationContent()
-            content.title = "\(candidate.providerName) usage is low"
-            content.body = "\(candidate.windowLabel): \(Int(candidate.remainingPercent.rounded()))% left"
+            content.title = AppLocalization.format("notification.usageLow.title", candidate.providerName)
+            content.body = AppLocalization.format(
+                "notification.usageLow.body",
+                candidate.windowLabel,
+                Int(candidate.remainingPercent.rounded()))
             content.sound = .default
             let request = UNNotificationRequest(
                 identifier: candidate.identifier,

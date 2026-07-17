@@ -108,7 +108,7 @@ final class UsageStore: ObservableObject {
             let accepted = await self.notificationController.setEnabled(enabled)
             self.notificationsEnabled = accepted
             self.notificationSettingsMessage = enabled && !accepted
-                ? "Notifications are disabled in System Settings."
+                ? AppLocalization.string("settings.notifications.denied")
                 : nil
         }
     }

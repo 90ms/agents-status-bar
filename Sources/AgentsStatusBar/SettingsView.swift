@@ -6,7 +6,7 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("Providers") {
+            Section(AppLocalization.string("settings.providers")) {
                 ForEach(self.store.descriptors) { descriptor in
                     Toggle(isOn: Binding(
                         get: { self.store.isEnabled(descriptor.id) },
@@ -17,12 +17,12 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Notifications") {
+            Section(AppLocalization.string("settings.notifications")) {
                 Toggle(isOn: Binding(
                     get: { self.store.notificationsEnabled },
                     set: { self.store.setNotificationsEnabled($0) }))
                 {
-                    Text("Warn when usage reaches 30% or 10% left")
+                    Text(AppLocalization.string("settings.notifications.thresholds"))
                 }
                 if let message = self.store.notificationSettingsMessage {
                     Text(message)
@@ -31,18 +31,18 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Menu Bar") {
+            Section(AppLocalization.string("settings.menuBar")) {
                 Toggle(isOn: Binding(
                     get: { self.store.showsRemainingInMenuBar },
                     set: { self.store.setShowsRemainingInMenuBar($0) }))
                 {
-                    Text("Show lowest remaining usage")
+                    Text(AppLocalization.string("settings.menuBar.lowest"))
                 }
                 Toggle(isOn: Binding(
                     get: { self.store.launchAtLoginEnabled },
                     set: { self.store.setLaunchAtLoginEnabled($0) }))
                 {
-                    Text("Launch at login")
+                    Text(AppLocalization.string("settings.launchAtLogin"))
                 }
                 if let message = self.store.launchAtLoginMessage {
                     Text(message)
@@ -51,8 +51,8 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Privacy") {
-                Text("Usage is read from known local CLI session files. Codex and Claude quotas reuse their existing CLI sign-ins with account usage endpoints. Prompts, responses, cookies, and authentication tokens are not stored by this app.")
+            Section(AppLocalization.string("settings.privacy")) {
+                Text(AppLocalization.string("settings.privacy.description"))
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }

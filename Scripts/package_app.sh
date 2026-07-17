@@ -19,6 +19,8 @@ rm -rf "$app_dir"
 mkdir -p "$contents_dir/MacOS" "$contents_dir/Resources"
 cp "$binary_dir/AgentsStatusBar" "$contents_dir/MacOS/AgentsStatusBar"
 cp "$project_dir/packaging/Info.plist" "$contents_dir/Info.plist"
+cp -R "$project_dir/Sources/AgentsStatusBar/Resources/en.lproj" "$contents_dir/Resources/en.lproj"
+cp -R "$project_dir/Sources/AgentsStatusBar/Resources/ko.lproj" "$contents_dir/Resources/ko.lproj"
 
 signing_identity=${APP_SIGN_IDENTITY:--}
 codesign --force --options runtime --sign "$signing_identity" "$app_dir"

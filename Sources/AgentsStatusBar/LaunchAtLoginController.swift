@@ -15,7 +15,7 @@ final class LaunchAtLoginController {
 
     var statusMessage: String? {
         self.service.status == .requiresApproval
-            ? "Approval is required in System Settings → General → Login Items."
+            ? AppLocalization.string("settings.launchAtLogin.approval")
             : nil
     }
 

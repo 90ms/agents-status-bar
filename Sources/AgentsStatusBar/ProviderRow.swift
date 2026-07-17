@@ -21,7 +21,7 @@ struct ProviderRow: View {
                         Text(window.label)
                         Spacer()
                         Text(window.remainingPercent, format: .number.precision(.fractionLength(0)))
-                            + Text("% left")
+                            + Text(AppLocalization.string("usage.percentLeft"))
                         if let reset = window.resetsAt {
                             Text("·")
                             Text(reset, style: .relative)
@@ -39,7 +39,7 @@ struct ProviderRow: View {
                     Spacer()
                     Text(tokenUsage.totalTokens.formatted(.number.notation(.compactName)))
                         .monospacedDigit()
-                    Text("tokens")
+                    Text(AppLocalization.string("usage.tokens"))
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -54,9 +54,9 @@ struct ProviderRow: View {
 
             if let source = snapshot.source {
                 HStack(spacing: 4) {
-                    Text(source.displayName)
+                    Text(AppLocalization.sourceName(source))
                     Spacer()
-                    Text("Updated")
+                    Text(AppLocalization.string("usage.updated"))
                     Text(snapshot.updatedAt, style: .relative)
                 }
                 .font(.caption2)
