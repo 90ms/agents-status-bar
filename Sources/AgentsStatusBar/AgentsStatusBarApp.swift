@@ -145,25 +145,23 @@ private struct ActivityStatusIcon: View {
 
     var body: some View {
         Group {
-            if self.isActive, !self.reduceMotion {
-                TimelineView(.animation(minimumInterval: 1.0 / 12.0, paused: false)) { context in
-                    Image(systemName: "arrow.triangle.2.circlepath")
-                        .rotationEffect(.degrees(self.rotationAngle(at: context.date)))
-                }
-            } else if self.isActive {
-                Image(systemName: "waveform")
+            if #available(macOS 15.0, *) {
+                Image(systemName: self.isActive ? "waveform" : self.systemName)
+                    .symbolEffect(
+                        .bounce,
+                        options: .repeating.speed(0.65),
+                        isActive: self.isActive && !self.reduceMotion)
             } else {
-                Image(systemName: self.systemName)
+                Image(systemName: self.isActive ? "waveform" : self.systemName)
+                    .symbolEffect(
+                        .pulse,
+                        options: .repeating,
+                        isActive: self.isActive && !self.reduceMotion)
             }
         }
             .frame(width: 14, height: 14)
             .accessibilityLabel(self.isActive
                 ? AppLocalization.string("activity.active")
                 : AppLocalization.string("activity.idle"))
-    }
-
-    private func rotationAngle(at date: Date) -> Double {
-        let cycle = date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1.2)
-        return cycle / 1.2 * 360
     }
 }
