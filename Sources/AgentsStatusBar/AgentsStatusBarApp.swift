@@ -71,5 +71,10 @@ struct AgentsStatusBarApp: App {
             HistoryView(store: self.store)
         }
         .defaultSize(width: 720, height: 460)
+
+        Window(AppLocalization.string("diagnostics.title"), id: "provider-diagnostics") {
+            DiagnosticsView(store: self.store)
+        }
+        .defaultSize(width: 680, height: 480)
     }
 }

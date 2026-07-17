@@ -285,6 +285,15 @@ struct SettingsView: View {
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
+
+            Section(AppLocalization.string("diagnostics.title")) {
+                Button(AppLocalization.string("diagnostics.open")) {
+                    self.openWindow(id: "provider-diagnostics")
+                }
+                Text(AppLocalization.string("diagnostics.privacy"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
     }

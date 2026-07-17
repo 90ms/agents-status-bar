@@ -28,6 +28,7 @@ Agents Status Bar keeps the limits you care about in one small menu:
 - per-provider enable/disable settings;
 - English and Korean UI with a System, English, or Korean language setting;
 - tabbed settings for general options, alerts, usage, and privacy;
+- a copyable provider diagnostics report that excludes prompts, responses, credentials, provider detail text, and file paths;
 - a provider protocol that makes adding another agent independent from the UI.
 
 All quota percentages are displayed as **remaining** values (`% left`). Account credentials are read only when a provider needs its official usage endpoint and are kept in memory. The app does not store prompts, responses, cookies, access tokens, or refresh tokens.
@@ -146,6 +147,7 @@ The project includes fixture-based parser tests and a macOS GitHub Actions build
 - The cached exchange-rate record contains only the public rate, publication date, and check time.
 - The cached price catalog contains only public model identifiers, prices, effective dates, and official source links.
 - The app has no analytics or telemetry.
+- Diagnostics expose only sanitized app/OS metadata and aggregate provider status, quota, model, and token fields.
 
 ## License
 
