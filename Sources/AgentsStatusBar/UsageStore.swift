@@ -27,6 +27,9 @@ final class UsageStore: ObservableObject {
     @Published private(set) var pricingCatalogMetadata: PricingCatalogMetadata
     @Published private(set) var pricingCatalogSource: PricingCatalogSource
     @Published private(set) var pricingUpdateMessage: String?
+    @Published private(set) var appUpdateResult: AppUpdateCheckResult?
+    @Published private(set) var isCheckingForAppUpdate: Bool
+    @Published private(set) var appUpdateMessage: String?
 
     private let providers: [any UsageProviding]
     private var refreshLoop: Task<Void, Never>?
@@ -35,6 +38,7 @@ final class UsageStore: ObservableObject {
     private let historyStore: UsageHistoryStore
     private let exchangeRateClient: DailyExchangeRateClient
     private let pricingCatalogClient: PricingCatalogUpdateClient
+    private let appUpdateClient: GitHubReleaseUpdateClient
     private static let enabledProvidersKey = "enabledProviderIDs"
     private static let legacyShowsRemainingInMenuBarKey = "showsRemainingInMenuBar"
     private static let menuBarDisplayModeKey = "menuBarDisplayMode"
@@ -57,11 +61,13 @@ final class UsageStore: ObservableObject {
         let historyStore = UsageHistoryStore()
         let exchangeRateClient = DailyExchangeRateClient()
         let pricingCatalogClient = PricingCatalogUpdateClient()
+        let appUpdateClient = GitHubReleaseUpdateClient()
         self.notificationController = notificationController
         self.launchAtLoginController = launchAtLoginController
         self.historyStore = historyStore
         self.exchangeRateClient = exchangeRateClient
         self.pricingCatalogClient = pricingCatalogClient
+        self.appUpdateClient = appUpdateClient
         self.notificationsEnabled = notificationController.isEnabled
         self.notificationSettingsMessage = nil
         self.warningThreshold = UserDefaults.standard.object(forKey: Self.warningThresholdKey) as? Int ?? 30
@@ -103,6 +109,9 @@ final class UsageStore: ObservableObject {
         self.pricingCatalogMetadata = TokenPricingCatalog.metadata
         self.pricingCatalogSource = .bundled
         self.pricingUpdateMessage = nil
+        self.appUpdateResult = nil
+        self.isCheckingForAppUpdate = false
+        self.appUpdateMessage = nil
         let enabledIDs: Set<ProviderID>
         if let stored = UserDefaults.standard.stringArray(forKey: Self.enabledProvidersKey) {
             enabledIDs = Set(stored.map { ProviderID(rawValue: $0) }).intersection(knownIDs)
@@ -126,6 +135,7 @@ final class UsageStore: ObservableObject {
             await self.refreshPricingCatalogIfNeeded()
             await self.refreshExchangeRate()
             self.processBudgetAlert()
+            await self.checkForAppUpdate()
         }
     }
 
@@ -290,6 +300,10 @@ final class UsageStore: ObservableObject {
         Task { await self.refreshPricingCatalogIfNeeded(force: true) }
     }
 
+    func refreshAppUpdate() {
+        Task { await self.checkForAppUpdate(force: true) }
+    }
+
     func setMenuBarDisplayMode(_ mode: MenuBarDisplayMode) {
         self.menuBarDisplayMode = mode
         UserDefaults.standard.set(mode.rawValue, forKey: Self.menuBarDisplayModeKey)
@@ -341,6 +355,11 @@ final class UsageStore: ObservableObject {
         self.providers.map(\.descriptor)
     }
 
+    var currentAppVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+            ?? "0.0.0"
+    }
+
     var monthlyEstimatedSpendUSD: Double {
         UsageCostSummary.accumulatedUSD(
             in: self.historyRecords,
@@ -386,6 +405,20 @@ final class UsageStore: ObservableObject {
             self.pricingUpdateMessage = nil
         } catch {
             self.pricingUpdateMessage = AppLocalization.string("settings.cost.catalogFailed")
+        }
+    }
+
+    private func checkForAppUpdate(force: Bool = false) async {
+        guard !self.isCheckingForAppUpdate else { return }
+        self.isCheckingForAppUpdate = true
+        defer { self.isCheckingForAppUpdate = false }
+        do {
+            self.appUpdateResult = try await self.appUpdateClient.check(
+                currentVersion: self.currentAppVersion,
+                force: force)
+            self.appUpdateMessage = nil
+        } catch {
+            self.appUpdateMessage = AppLocalization.string("settings.updates.failed")
         }
     }
 

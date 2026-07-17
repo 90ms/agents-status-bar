@@ -115,6 +115,48 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+
+            Section(AppLocalization.string("settings.updates.title")) {
+                HStack {
+                    Text(AppLocalization.format(
+                        "settings.updates.current",
+                        self.store.currentAppVersion))
+                    Spacer()
+                    Button(AppLocalization.string("settings.updates.check")) {
+                        self.store.refreshAppUpdate()
+                    }
+                    .disabled(self.store.isCheckingForAppUpdate)
+                }
+
+                if self.store.isCheckingForAppUpdate {
+                    ProgressView()
+                        .controlSize(.small)
+                } else if let result = self.store.appUpdateResult {
+                    if result.isUpdateAvailable {
+                        Link(
+                            AppLocalization.format(
+                                "settings.updates.available",
+                                result.latestRelease.version.description),
+                            destination: result.latestRelease.pageURL)
+                    } else {
+                        Text(AppLocalization.string("settings.updates.latest"))
+                            .foregroundStyle(.secondary)
+                    }
+                    if result.isStale {
+                        Text(AppLocalization.string("settings.updates.stale"))
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
+                } else if let message = self.store.appUpdateMessage {
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+
+                Text(AppLocalization.string("settings.updates.manual"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
     }

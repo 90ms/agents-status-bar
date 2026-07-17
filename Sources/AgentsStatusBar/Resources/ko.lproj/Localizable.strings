@@ -45,6 +45,15 @@
 "settings.menuBar.compact.description" = "핵심 쿼터만 표시하고 토큰, 비용, 상세 및 출처 행을 숨깁니다.";
 "settings.launchAtLogin" = "로그인 시 실행";
 "settings.launchAtLogin.approval" = "시스템 설정 → 일반 → 로그인 항목에서 승인이 필요합니다.";
+"settings.updates.title" = "앱 업데이트";
+"settings.updates.current" = "현재 버전: %@";
+"settings.updates.check" = "지금 확인";
+"settings.updates.available" = "버전 %@ 사용 가능 — 릴리스 보기";
+"settings.updates.latest" = "최신 안정 버전을 사용하고 있습니다.";
+"settings.updates.stale" = "GitHub에 연결하지 못해 마지막으로 검증한 결과를 표시합니다.";
+"settings.updates.failed" = "GitHub Releases에서 업데이트를 확인하지 못했습니다.";
+"settings.updates.manual" = "백그라운드에서 GitHub Releases를 확인합니다. 다운로드와 설치는 직접 진행합니다.";
+"updates.menuAvailable" = "버전 %@ 사용 가능";
 "settings.cost.title" = "비용 추정";
 "settings.cost.currency" = "표시 통화";
 "settings.cost.usd" = "달러 ($)";

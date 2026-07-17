@@ -42,6 +42,19 @@ struct AgentsStatusBarApp: App {
                     }
                 }
 
+                if let result = self.store.appUpdateResult, result.isUpdateAvailable {
+                    Divider()
+                        .padding(.vertical, 6)
+                    Link(destination: result.latestRelease.pageURL) {
+                        Label(
+                            AppLocalization.format(
+                                "updates.menuAvailable",
+                                result.latestRelease.version.description),
+                            systemImage: "arrow.down.circle")
+                    }
+                    .font(.caption)
+                }
+
                 Divider()
                     .padding(.vertical, 8)
                 HStack {

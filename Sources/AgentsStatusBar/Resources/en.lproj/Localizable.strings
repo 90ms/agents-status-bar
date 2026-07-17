@@ -45,6 +45,15 @@
 "settings.menuBar.compact.description" = "Show quota essentials and hide token, cost, detail, and source rows.";
 "settings.launchAtLogin" = "Launch at login";
 "settings.launchAtLogin.approval" = "Approval is required in System Settings → General → Login Items.";
+"settings.updates.title" = "App Updates";
+"settings.updates.current" = "Current version: %@";
+"settings.updates.check" = "Check Now";
+"settings.updates.available" = "Version %@ is available — View Release";
+"settings.updates.latest" = "You're using the latest stable version.";
+"settings.updates.stale" = "GitHub could not be reached. This result is from the last validated check.";
+"settings.updates.failed" = "Could not check GitHub Releases for an update.";
+"settings.updates.manual" = "The app checks GitHub Releases in the background. Download and installation remain manual.";
+"updates.menuAvailable" = "Version %@ available";
 "settings.cost.title" = "Cost Estimate";
 "settings.cost.currency" = "Display currency";
 "settings.cost.usd" = "USD ($)";

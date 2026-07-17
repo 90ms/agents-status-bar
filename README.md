@@ -23,6 +23,7 @@ Agents Status Bar keeps the limits you care about in one small menu:
 - configurable warning and critical alerts per provider;
 - a customizable menu-bar label: icon only, lowest remaining, monthly estimated cost, or one provider's remaining usage;
 - an optional compact popover that keeps quota essentials visible while hiding secondary detail rows;
+- a six-hour GitHub Releases update check with a validated cache and stable-release link;
 - Codex account, Claude Code, and Grok support;
 - one-minute refresh with a manual refresh button;
 - optional launch at login;
@@ -56,6 +57,8 @@ Cost is an estimate of what the locally observed tokens would cost at published 
 Monthly totals are reconstructed from positive changes in the cumulative cost samples and scope resets. They include only usage observed while the app is running and recording history, so they remain estimates rather than billing records.
 
 The versioned model-price catalog follows the official [OpenAI model pricing](https://developers.openai.com/api/docs/models) and [Anthropic pricing](https://platform.claude.com/docs/en/about-claude/pricing) pages. The app checks this repository for a newer catalog once per day, rejects invalid schemas, downgrades, same-version changes, unsafe prices, and untrusted source domains, and retains bundled and validated-cache fallbacks. USD/KRW is checked once per Seoul calendar day through [Frankfurter](https://frankfurter.dev/) using its ECB provider. The settings screen shows the price-catalog version, applied exchange rate, and their effective dates; weekends and holidays may use the latest earlier ECB date.
+
+App updates are discovered automatically through GitHub Releases, but downloading and installing a release remains manual. This keeps the ad-hoc signed build usable without a paid Apple Developer Program membership.
 
 ## Install
 
