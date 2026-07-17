@@ -54,7 +54,7 @@ The bundled model prices follow the official [OpenAI model pricing](https://deve
 
 ## Install
 
-The `v0.3.0` preview requires macOS 14 or later and Apple silicon.
+The `v0.3.1` preview requires macOS 14 or later and Apple silicon.
 
 ### Homebrew
 
@@ -73,7 +73,7 @@ brew untap 90ms/agents-status-bar
 
 ### GitHub Release
 
-Download `AgentsStatusBar-0.3.0.zip` from [Releases](https://github.com/90ms/agents-status-bar/releases), unzip it, and move `Agents Status Bar.app` to `/Applications`.
+Download `AgentsStatusBar-0.3.1.zip` from [Releases](https://github.com/90ms/agents-status-bar/releases), unzip it, and move `Agents Status Bar.app` to `/Applications`.
 
 This preview is ad-hoc signed because the project does not yet have an Apple Developer ID certificate. On first launch, macOS may require you to approve the app in **System Settings → Privacy & Security**. Developer ID signing and notarization are planned for a future release.
 
