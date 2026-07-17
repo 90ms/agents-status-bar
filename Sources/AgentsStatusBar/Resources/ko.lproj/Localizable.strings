@@ -42,6 +42,12 @@
 "settings.cost.rate" = "1 USD = ₩%@ · ECB %@ 기준";
 "settings.cost.rateUnavailable" = "아직 USD/KRW 환율을 가져오지 못했습니다.";
 "settings.cost.disclaimer" = "로컬 토큰 수와 공개 API 단가로 계산한 추정치입니다. Codex, Claude 또는 Grok 구독 청구액과는 다릅니다.";
+"settings.cost.catalog" = "가격표 v%d · %@ 기준 · %@";
+"settings.cost.catalogRefresh" = "지금 확인";
+"settings.cost.catalogFailed" = "가격표를 갱신하지 못했습니다. 마지막으로 검증된 번들 또는 캐시 가격표를 계속 사용합니다.";
+"settings.cost.catalogSource.bundled" = "앱 내장";
+"settings.cost.catalogSource.cache" = "캐시";
+"settings.cost.catalogSource.remote" = "업데이트됨";
 "settings.privacy" = "개인정보 보호";
 "settings.privacy.description" = "알려진 로컬 CLI 세션 파일에서 사용량을 읽습니다. Codex와 Claude 쿼터는 기존 CLI 로그인과 계정 사용량 API를 재사용합니다. 프롬프트, 응답, 쿠키 및 인증 토큰은 저장하지 않습니다.";
 "notification.usageLow.title" = "%@ 사용량이 부족합니다";

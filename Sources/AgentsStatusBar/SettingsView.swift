@@ -190,6 +190,27 @@ struct SettingsView: View {
                 Text(AppLocalization.string("settings.cost.disclaimer"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                Divider()
+                HStack {
+                    Text(AppLocalization.format(
+                        "settings.cost.catalog",
+                        self.store.pricingCatalogMetadata.catalogVersion,
+                        self.store.pricingCatalogMetadata.effectiveDate,
+                        AppLocalization.string(
+                            "settings.cost.catalogSource.\(self.store.pricingCatalogSource.rawValue)")))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button(AppLocalization.string("settings.cost.catalogRefresh")) {
+                        self.store.refreshPricingCatalog()
+                    }
+                }
+                if let message = self.store.pricingUpdateMessage {
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
             }
 
             Section(AppLocalization.string("settings.budget.title")) {

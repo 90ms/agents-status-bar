@@ -13,6 +13,7 @@ let package = Package(
     targets: [
         .target(
             name: "AgentsStatusCore",
+            resources: [.copy("Resources")],
             swiftSettings: [.enableUpcomingFeature("StrictConcurrency")],
             linkerSettings: [.linkedFramework("Security", .when(platforms: [.macOS]))]),
         .executableTarget(

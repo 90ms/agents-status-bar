@@ -22,6 +22,9 @@ final class UsageStore: ObservableObject {
     @Published private(set) var monthlyBudgetEnabled: Bool
     @Published private(set) var monthlyBudgetAmount: Double
     @Published private(set) var monthlyBudgetCurrency: CostDisplayCurrency
+    @Published private(set) var pricingCatalogMetadata: PricingCatalogMetadata
+    @Published private(set) var pricingCatalogSource: PricingCatalogSource
+    @Published private(set) var pricingUpdateMessage: String?
 
     private let providers: [any UsageProviding]
     private var refreshLoop: Task<Void, Never>?
@@ -29,6 +32,7 @@ final class UsageStore: ObservableObject {
     private let launchAtLoginController: LaunchAtLoginController
     private let historyStore: UsageHistoryStore
     private let exchangeRateClient: DailyExchangeRateClient
+    private let pricingCatalogClient: PricingCatalogUpdateClient
     private static let enabledProvidersKey = "enabledProviderIDs"
     private static let showsRemainingInMenuBarKey = "showsRemainingInMenuBar"
     private static let warningThresholdKey = "usageNotificationWarningThreshold"
@@ -38,6 +42,7 @@ final class UsageStore: ObservableObject {
     private static let monthlyBudgetEnabledKey = "monthlyBudgetEnabled"
     private static let monthlyBudgetAmountKey = "monthlyBudgetAmount"
     private static let monthlyBudgetCurrencyKey = "monthlyBudgetCurrency"
+    private static let pricingCatalogLastCheckKey = "pricingCatalogLastCheck"
 
     init(providers: [any UsageProviding] = ProviderRegistry.defaultProviders()) {
         self.providers = providers
@@ -45,10 +50,12 @@ final class UsageStore: ObservableObject {
         let launchAtLoginController = LaunchAtLoginController()
         let historyStore = UsageHistoryStore()
         let exchangeRateClient = DailyExchangeRateClient()
+        let pricingCatalogClient = PricingCatalogUpdateClient()
         self.notificationController = notificationController
         self.launchAtLoginController = launchAtLoginController
         self.historyStore = historyStore
         self.exchangeRateClient = exchangeRateClient
+        self.pricingCatalogClient = pricingCatalogClient
         self.notificationsEnabled = notificationController.isEnabled
         self.notificationSettingsMessage = nil
         self.warningThreshold = UserDefaults.standard.object(forKey: Self.warningThresholdKey) as? Int ?? 30
@@ -71,6 +78,9 @@ final class UsageStore: ObservableObject {
         self.monthlyBudgetCurrency = UserDefaults.standard.string(
             forKey: Self.monthlyBudgetCurrencyKey)
             .flatMap(CostDisplayCurrency.init(rawValue:)) ?? costDisplayCurrency
+        self.pricingCatalogMetadata = TokenPricingCatalog.metadata
+        self.pricingCatalogSource = .bundled
+        self.pricingUpdateMessage = nil
         let knownIDs = Set(providers.map { $0.descriptor.id })
         let enabledIDs: Set<ProviderID>
         if let stored = UserDefaults.standard.stringArray(forKey: Self.enabledProvidersKey) {
@@ -90,6 +100,9 @@ final class UsageStore: ObservableObject {
         Task { [weak self] in
             guard let self else { return }
             self.historyRecords = (try? await self.historyStore.records()) ?? []
+            let cachedPricing = await self.pricingCatalogClient.activateCachedCatalog()
+            self.applyPricingCatalogResult(cachedPricing)
+            await self.refreshPricingCatalogIfNeeded()
             await self.refreshExchangeRate()
             self.processBudgetAlert()
         }
@@ -140,6 +153,7 @@ final class UsageStore: ObservableObject {
             // History is an optional local enhancement and must not fail provider refreshes.
         }
         await self.refreshExchangeRate()
+        await self.refreshPricingCatalogIfNeeded()
         self.processBudgetAlert()
         self.isRefreshing = false
     }
@@ -251,6 +265,10 @@ final class UsageStore: ObservableObject {
         }
     }
 
+    func refreshPricingCatalog() {
+        Task { await self.refreshPricingCatalogIfNeeded(force: true) }
+    }
+
     func setShowsRemainingInMenuBar(_ enabled: Bool) {
         self.showsRemainingInMenuBar = enabled
         UserDefaults.standard.set(enabled, forKey: Self.showsRemainingInMenuBarKey)
@@ -304,5 +322,28 @@ final class UsageStore: ObservableObject {
             budgetUSD: budgetUSD,
             spentText: spent,
             budgetText: budget)
+    }
+
+    private func refreshPricingCatalogIfNeeded(force: Bool = false) async {
+        if !force,
+           let lastCheck = UserDefaults.standard.object(
+               forKey: Self.pricingCatalogLastCheckKey) as? Date,
+           Calendar.current.isDate(lastCheck, inSameDayAs: .now)
+        {
+            return
+        }
+        UserDefaults.standard.set(Date.now, forKey: Self.pricingCatalogLastCheckKey)
+        do {
+            let result = try await self.pricingCatalogClient.refresh()
+            self.applyPricingCatalogResult(result)
+            self.pricingUpdateMessage = nil
+        } catch {
+            self.pricingUpdateMessage = AppLocalization.string("settings.cost.catalogFailed")
+        }
+    }
+
+    private func applyPricingCatalogResult(_ result: PricingCatalogUpdateResult) {
+        self.pricingCatalogMetadata = result.metadata
+        self.pricingCatalogSource = result.source
     }
 }

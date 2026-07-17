@@ -53,7 +53,7 @@ Cost is an estimate of what the locally observed tokens would cost at published 
 
 Monthly totals are reconstructed from positive changes in the cumulative cost samples and scope resets. They include only usage observed while the app is running and recording history, so they remain estimates rather than billing records.
 
-The bundled model prices follow the official [OpenAI model pricing](https://developers.openai.com/api/docs/models) and [Anthropic pricing](https://platform.claude.com/docs/en/about-claude/pricing) pages. USD/KRW is checked once per Seoul calendar day through [Frankfurter](https://frankfurter.dev/) using its ECB provider. The settings screen shows both the applied rate and its publication date; weekends and holidays may therefore use the latest earlier ECB date.
+The versioned model-price catalog follows the official [OpenAI model pricing](https://developers.openai.com/api/docs/models) and [Anthropic pricing](https://platform.claude.com/docs/en/about-claude/pricing) pages. The app checks this repository for a newer catalog once per day, rejects invalid schemas, downgrades, same-version changes, unsafe prices, and untrusted source domains, and retains bundled and validated-cache fallbacks. USD/KRW is checked once per Seoul calendar day through [Frankfurter](https://frankfurter.dev/) using its ECB provider. The settings screen shows the price-catalog version, applied exchange rate, and their effective dates; weekends and holidays may use the latest earlier ECB date.
 
 ## Install
 
@@ -144,6 +144,7 @@ The project includes fixture-based parser tests and a macOS GitHub Actions build
 - Local parsing is restricted to known usage fields in agent session directories.
 - Usage history stores only aggregate percentages and token totals for 30 days in Application Support.
 - The cached exchange-rate record contains only the public rate, publication date, and check time.
+- The cached price catalog contains only public model identifiers, prices, effective dates, and official source links.
 - The app has no analytics or telemetry.
 
 ## License

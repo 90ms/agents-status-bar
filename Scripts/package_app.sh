@@ -18,6 +18,7 @@ fi
 rm -rf "$app_dir"
 mkdir -p "$contents_dir/MacOS" "$contents_dir/Resources"
 cp "$binary_dir/AgentsStatusBar" "$contents_dir/MacOS/AgentsStatusBar"
+cp -R "$binary_dir/AgentsStatusBar_AgentsStatusCore.bundle" "$contents_dir/Resources/AgentsStatusBar_AgentsStatusCore.bundle"
 cp "$project_dir/packaging/Info.plist" "$contents_dir/Info.plist"
 cp -R "$project_dir/Sources/AgentsStatusBar/Resources/en.lproj" "$contents_dir/Resources/en.lproj"
 cp -R "$project_dir/Sources/AgentsStatusBar/Resources/ko.lproj" "$contents_dir/Resources/ko.lproj"

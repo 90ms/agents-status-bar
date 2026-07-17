@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "catalogVersion": 1,
+  "publishedAt": "2026-07-17T00:00:00Z",
+  "effectiveDate": "2026-07-17",
+  "models": [
+    {
+      "id": "openai-gpt-5.6-sol",
+      "providerID": "codex",
+      "matchKind": "contains",
+      "modelPattern": "gpt-5.6-sol",
+      "pricing": {
+        "inputPerMillion": 5,
+        "cachedInputPerMillion": 0.5,
+        "outputPerMillion": 30
+      },
+      "sourceURL": "https://developers.openai.com/api/docs/models/gpt-5.6-sol"
+    },
+    {
+      "id": "openai-gpt-5.6-terra",
+      "providerID": "codex",
+      "matchKind": "contains",
+      "modelPattern": "gpt-5.6-terra",
+      "pricing": {
+        "inputPerMillion": 2.5,
+        "cachedInputPerMillion": 0.25,
+        "outputPerMillion": 15
+      },
+      "sourceURL": "https://developers.openai.com/api/docs/models"
+    },
+    {
+      "id": "openai-gpt-5.6-luna",
+      "providerID": "codex",
+      "matchKind": "contains",
+      "modelPattern": "gpt-5.6-luna",
+      "pricing": {
+        "inputPerMillion": 1,
+        "cachedInputPerMillion": 0.1,
+        "outputPerMillion": 6
+      },
+      "sourceURL": "https://developers.openai.com/api/docs/models"
+    },
+    {
+      "id": "openai-gpt-5-codex",
+      "providerID": "codex",
+      "matchKind": "contains",
+      "modelPattern": "gpt-5-codex",
+      "pricing": {
+        "inputPerMillion": 1.25,
+        "cachedInputPerMillion": 0.125,
+        "outputPerMillion": 10
+      },
+      "sourceURL": "https://developers.openai.com/api/docs/models/gpt-5-codex"
+    },
+    {
+      "id": "openai-gpt-5",
+      "providerID": "codex",
+      "matchKind": "exact",
+      "modelPattern": "gpt-5",
+      "pricing": {
+        "inputPerMillion": 1.25,
+        "cachedInputPerMillion": 0.125,
+        "outputPerMillion": 10
+      },
+      "sourceURL": "https://developers.openai.com/api/docs/models/gpt-5"
+    },
+    {
+      "id": "anthropic-claude-sonnet-5-promotion",
+      "providerID": "claude",
+      "matchKind": "contains",
+      "modelPattern": "sonnet-5",
+      "effectiveUntil": "2026-09-01T00:00:00Z",
+      "pricing": {
+        "inputPerMillion": 2,
+        "cacheCreationPerMillion": 2.5,
+        "cacheCreation1hPerMillion": 4,
+        "cachedInputPerMillion": 0.2,
+        "outputPerMillion": 10
+      },
+      "sourceURL": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-sonnet-5-standard",
+      "providerID": "claude",
+      "matchKind": "contains",
+      "modelPattern": "sonnet-5",
+      "effectiveFrom": "2026-09-01T00:00:00Z",
+      "pricing": {
+        "inputPerMillion": 3,
+        "cacheCreationPerMillion": 3.75,
+        "cacheCreation1hPerMillion": 6,
+        "cachedInputPerMillion": 0.3,
+        "outputPerMillion": 15
+      },
+      "sourceURL": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-opus-4",
+      "providerID": "claude",
+      "matchKind": "contains",
+      "modelPattern": "opus-4",
+      "pricing": {
+        "inputPerMillion": 5,
+        "cacheCreationPerMillion": 6.25,
+        "cacheCreation1hPerMillion": 10,
+        "cachedInputPerMillion": 0.5,
+        "outputPerMillion": 25
+      },
+      "sourceURL": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-sonnet-4",
+      "providerID": "claude",
+      "matchKind": "contains",
+      "modelPattern": "sonnet-4",
+      "pricing": {
+        "inputPerMillion": 3,
+        "cacheCreationPerMillion": 3.75,
+        "cacheCreation1hPerMillion": 6,
+        "cachedInputPerMillion": 0.3,
+        "outputPerMillion": 15
+      },
+      "sourceURL": "https://platform.claude.com/docs/en/about-claude/pricing"
+    },
+    {
+      "id": "anthropic-claude-haiku-4",
+      "providerID": "claude",
+      "matchKind": "contains",
+      "modelPattern": "haiku-4",
+      "pricing": {
+        "inputPerMillion": 1,
+        "cacheCreationPerMillion": 1.25,
+        "cacheCreation1hPerMillion": 2,
+        "cachedInputPerMillion": 0.1,
+        "outputPerMillion": 5
+      },
+      "sourceURL": "https://platform.claude.com/docs/en/about-claude/pricing"
+    }
+  ]
+}
