@@ -17,6 +17,20 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Notifications") {
+                Toggle(isOn: Binding(
+                    get: { self.store.notificationsEnabled },
+                    set: { self.store.setNotificationsEnabled($0) }))
+                {
+                    Text("Warn when usage reaches 30% or 10% left")
+                }
+                if let message = self.store.notificationSettingsMessage {
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+            }
+
             Section("Privacy") {
                 Text("Usage is read from known local CLI session files. Codex and Claude quotas reuse their existing CLI sign-ins with account usage endpoints. Prompts, responses, cookies, and authentication tokens are not stored by this app.")
                     .font(.callout)

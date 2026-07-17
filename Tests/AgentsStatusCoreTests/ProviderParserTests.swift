@@ -68,6 +68,31 @@ struct ProviderParserTests {
     }
 
     @Test
+    func usageAlertsChooseOneThresholdAndIgnoreContextWindows() {
+        let descriptor = ProviderDescriptor(
+            id: .codex,
+            displayName: "Codex",
+            shortName: "Codex",
+            systemImage: "chart.bar",
+            capabilities: .init(supportsQuotaWindows: true))
+        let snapshot = ProviderSnapshot(
+            descriptor: descriptor,
+            availability: .available,
+            source: .officialAPI,
+            quotaWindows: [
+                QuotaWindow(id: "weekly", kind: .weekly, label: "Weekly", usedPercent: 76),
+                QuotaWindow(id: "critical", kind: .weekly, label: "Model weekly", usedPercent: 93),
+                QuotaWindow(id: "context", kind: .context, label: "Context", usedPercent: 95),
+            ])
+
+        let alerts = UsageAlertEvaluator.candidates(in: [snapshot])
+
+        #expect(alerts.map(\.threshold) == [30, 10])
+        #expect(alerts.map(\.windowID) == ["weekly", "critical"])
+        #expect(Set(alerts.map(\.identifier)).count == 2)
+    }
+
+    @Test
     func claudeShowsConnectedWhenTodaySessionHasNoUsageYet() async throws {
         let temporaryHome = FileManager.default.temporaryDirectory
             .appending(path: UUID().uuidString, directoryHint: .isDirectory)

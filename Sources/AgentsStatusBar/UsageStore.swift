@@ -7,13 +7,20 @@ final class UsageStore: ObservableObject {
     @Published private(set) var isRefreshing = false
     @Published private(set) var lastRefresh: Date?
     @Published private(set) var enabledProviderIDs: Set<ProviderID>
+    @Published private(set) var notificationsEnabled: Bool
+    @Published private(set) var notificationSettingsMessage: String?
 
     private let providers: [any UsageProviding]
     private var refreshLoop: Task<Void, Never>?
+    private let notificationController: UsageNotificationController
     private static let enabledProvidersKey = "enabledProviderIDs"
 
     init(providers: [any UsageProviding] = ProviderRegistry.defaultProviders()) {
         self.providers = providers
+        let notificationController = UsageNotificationController()
+        self.notificationController = notificationController
+        self.notificationsEnabled = notificationController.isEnabled
+        self.notificationSettingsMessage = nil
         let knownIDs = Set(providers.map { $0.descriptor.id })
         let enabledIDs: Set<ProviderID>
         if let stored = UserDefaults.standard.stringArray(forKey: Self.enabledProvidersKey) {
@@ -59,6 +66,7 @@ final class UsageStore: ObservableObject {
 
         let order = Dictionary(uniqueKeysWithValues: activeProviders.enumerated().map { ($1.descriptor.id, $0) })
         self.snapshots = results.sorted { order[$0.id, default: .max] < order[$1.id, default: .max] }
+        self.notificationController.process(self.snapshots)
         self.lastRefresh = .now
         self.isRefreshing = false
     }
@@ -82,6 +90,16 @@ final class UsageStore: ObservableObject {
                 self.snapshots.first(where: { $0.id == provider.descriptor.id }) ?? .loading(provider.descriptor)
             }
         Task { await self.refresh() }
+    }
+
+    func setNotificationsEnabled(_ enabled: Bool) {
+        Task {
+            let accepted = await self.notificationController.setEnabled(enabled)
+            self.notificationsEnabled = accepted
+            self.notificationSettingsMessage = enabled && !accepted
+                ? "Notifications are disabled in System Settings."
+                : nil
+        }
     }
 
     var descriptors: [ProviderDescriptor] {
