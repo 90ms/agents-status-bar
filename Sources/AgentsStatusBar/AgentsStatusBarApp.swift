@@ -50,8 +50,13 @@ struct AgentsStatusBarApp: App {
             .frame(width: 340)
             .onAppear { self.store.start() }
         } label: {
-            Image(systemName: "chart.bar.fill")
-            Text("Agents")
+            if let remaining = self.store.menuBarRemainingPercent {
+                Image(systemName: remaining < 10 ? "exclamationmark.triangle.fill" : "chart.bar.fill")
+                Text("Agents \(Int(remaining.rounded()))%")
+            } else {
+                Image(systemName: "chart.bar.fill")
+                Text("Agents")
+            }
         }
         .menuBarExtraStyle(.window)
 

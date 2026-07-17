@@ -31,6 +31,15 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Menu Bar") {
+                Toggle(isOn: Binding(
+                    get: { self.store.showsRemainingInMenuBar },
+                    set: { self.store.setShowsRemainingInMenuBar($0) }))
+                {
+                    Text("Show lowest remaining usage")
+                }
+            }
+
             Section("Privacy") {
                 Text("Usage is read from known local CLI session files. Codex and Claude quotas reuse their existing CLI sign-ins with account usage endpoints. Prompts, responses, cookies, and authentication tokens are not stored by this app.")
                     .font(.callout)

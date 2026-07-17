@@ -9,11 +9,13 @@ final class UsageStore: ObservableObject {
     @Published private(set) var enabledProviderIDs: Set<ProviderID>
     @Published private(set) var notificationsEnabled: Bool
     @Published private(set) var notificationSettingsMessage: String?
+    @Published private(set) var showsRemainingInMenuBar: Bool
 
     private let providers: [any UsageProviding]
     private var refreshLoop: Task<Void, Never>?
     private let notificationController: UsageNotificationController
     private static let enabledProvidersKey = "enabledProviderIDs"
+    private static let showsRemainingInMenuBarKey = "showsRemainingInMenuBar"
 
     init(providers: [any UsageProviding] = ProviderRegistry.defaultProviders()) {
         self.providers = providers
@@ -21,6 +23,8 @@ final class UsageStore: ObservableObject {
         self.notificationController = notificationController
         self.notificationsEnabled = notificationController.isEnabled
         self.notificationSettingsMessage = nil
+        self.showsRemainingInMenuBar = UserDefaults.standard.object(
+            forKey: Self.showsRemainingInMenuBarKey) as? Bool ?? true
         let knownIDs = Set(providers.map { $0.descriptor.id })
         let enabledIDs: Set<ProviderID>
         if let stored = UserDefaults.standard.stringArray(forKey: Self.enabledProvidersKey) {
@@ -100,6 +104,16 @@ final class UsageStore: ObservableObject {
                 ? "Notifications are disabled in System Settings."
                 : nil
         }
+    }
+
+    func setShowsRemainingInMenuBar(_ enabled: Bool) {
+        self.showsRemainingInMenuBar = enabled
+        UserDefaults.standard.set(enabled, forKey: Self.showsRemainingInMenuBarKey)
+    }
+
+    var menuBarRemainingPercent: Double? {
+        guard self.showsRemainingInMenuBar else { return nil }
+        return UsageSummary.minimumRemainingPercent(in: self.snapshots)
     }
 
     var descriptors: [ProviderDescriptor] {

@@ -90,6 +90,7 @@ struct ProviderParserTests {
         #expect(alerts.map(\.threshold) == [30, 10])
         #expect(alerts.map(\.windowID) == ["weekly", "critical"])
         #expect(Set(alerts.map(\.identifier)).count == 2)
+        #expect(UsageSummary.minimumRemainingPercent(in: [snapshot]) == 5)
     }
 
     @Test
