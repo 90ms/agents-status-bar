@@ -36,23 +36,29 @@ struct HistoryView: View {
     }
 
     private var costPoints: [CostPoint] {
+        let providerID = self.selectedProviderID ?? self.availableProviders.first?.id
+        let cutoff = Date.now.addingTimeInterval(TimeInterval(-self.rangeDays * 24 * 60 * 60))
         var previousUSD: Double?
         var accumulatedUSD = 0.0
-        return self.visibleRecords.sorted(by: { $0.timestamp < $1.timestamp }).compactMap { record in
+        let records = self.store.historyRecords
+            .filter { $0.providerID == providerID }
+            .sorted(by: { $0.timestamp < $1.timestamp })
+        return records.compactMap { record in
             guard let costUSD = record.costUSD,
-                  let displayAmount = self.store.costDisplayCurrency.amount(
-                      fromUSD: 0,
-                      exchangeRate: self.store.exchangeRateQuote)
+                  costUSD >= 0
             else { return nil }
+            guard record.timestamp >= cutoff else {
+                previousUSD = costUSD
+                return nil
+            }
             if let previousUSD {
                 accumulatedUSD += costUSD >= previousUSD ? costUSD - previousUSD : costUSD
-            } else {
-                accumulatedUSD += costUSD
             }
             previousUSD = costUSD
-            let converted = self.store.costDisplayCurrency.amount(
+            guard let converted = self.store.costDisplayCurrency.amount(
                 fromUSD: accumulatedUSD,
-                exchangeRate: self.store.exchangeRateQuote) ?? displayAmount
+                exchangeRate: self.store.exchangeRateQuote)
+            else { return nil }
             return CostPoint(id: record.id, timestamp: record.timestamp, amount: converted)
         }
     }

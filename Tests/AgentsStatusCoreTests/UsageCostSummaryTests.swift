@@ -7,6 +7,7 @@ struct UsageCostSummaryTests {
     func accumulatedCostCountsPositiveDeltasAndScopeResets() {
         let start = Date(timeIntervalSince1970: 1_800_000_000)
         let records = [
+            self.record(provider: .codex, cost: 0.08, at: start.addingTimeInterval(-60)),
             self.record(provider: .codex, cost: 0.10, at: start),
             self.record(provider: .codex, cost: 0.30, at: start.addingTimeInterval(60)),
             self.record(provider: .claude, cost: 0.20, at: start.addingTimeInterval(90)),
@@ -19,8 +20,8 @@ struct UsageCostSummaryTests {
             since: start,
             providerID: .codex)
 
-        #expect(abs(all - 0.55) < 0.000_001)
-        #expect(abs(codex - 0.35) < 0.000_001)
+        #expect(abs(all - 0.27) < 0.000_001)
+        #expect(abs(codex - 0.27) < 0.000_001)
     }
 
     private func record(
