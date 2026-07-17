@@ -15,8 +15,12 @@ A privacy-conscious macOS menu-bar app that shows how much usage remains across 
 Agents Status Bar keeps the limits you care about in one small menu:
 
 - remaining quota, reset time, and local token totals;
+- visible data source and last successful update time;
+- optional alerts at 30% and 10% remaining;
+- the lowest remaining value directly in the menu bar;
 - Codex account, Claude Code, and Grok support;
 - one-minute refresh with a manual refresh button;
+- optional launch at login;
 - per-provider enable/disable settings;
 - a provider protocol that makes adding another agent independent from the UI.
 
@@ -34,7 +38,7 @@ Provider CLI formats and usage endpoints are not public compatibility contracts 
 
 ## Install
 
-The `v0.1.0` preview requires macOS 14 or later and Apple silicon.
+The `v0.2.0` preview requires macOS 14 or later and Apple silicon.
 
 ### Homebrew
 
@@ -53,7 +57,7 @@ brew untap 90ms/agents-status-bar
 
 ### GitHub Release
 
-Download `AgentsStatusBar-0.1.0.zip` from [Releases](https://github.com/90ms/agents-status-bar/releases), unzip it, and move `Agents Status Bar.app` to `/Applications`.
+Download `AgentsStatusBar-0.2.0.zip` from [Releases](https://github.com/90ms/agents-status-bar/releases), unzip it, and move `Agents Status Bar.app` to `/Applications`.
 
 This preview is ad-hoc signed because the project does not yet have an Apple Developer ID certificate. On first launch, macOS may require you to approve the app in **System Settings → Privacy & Security**. Developer ID signing and notarization are planned for a future release.
 
