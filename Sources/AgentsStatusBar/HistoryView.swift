@@ -6,6 +6,18 @@ struct HistoryView: View {
     @ObservedObject var store: UsageStore
     @State private var selectedProviderID: ProviderID?
     @State private var rangeDays = 7
+    @State private var metric = HistoryMetric.quota
+
+    private enum HistoryMetric: String, Hashable {
+        case quota
+        case cost
+    }
+
+    private struct CostPoint: Identifiable {
+        let id: UUID
+        let timestamp: Date
+        let amount: Double
+    }
 
     private var availableProviders: [(id: ProviderID, name: String)] {
         var seen = Set<ProviderID>()
@@ -20,6 +32,28 @@ struct HistoryView: View {
         let cutoff = Date.now.addingTimeInterval(TimeInterval(-self.rangeDays * 24 * 60 * 60))
         return self.store.historyRecords.filter {
             $0.providerID == providerID && $0.timestamp >= cutoff
+        }
+    }
+
+    private var costPoints: [CostPoint] {
+        var previousUSD: Double?
+        var accumulatedUSD = 0.0
+        return self.visibleRecords.sorted(by: { $0.timestamp < $1.timestamp }).compactMap { record in
+            guard let costUSD = record.costUSD,
+                  let displayAmount = self.store.costDisplayCurrency.amount(
+                      fromUSD: 0,
+                      exchangeRate: self.store.exchangeRateQuote)
+            else { return nil }
+            if let previousUSD {
+                accumulatedUSD += costUSD >= previousUSD ? costUSD - previousUSD : costUSD
+            } else {
+                accumulatedUSD += costUSD
+            }
+            previousUSD = costUSD
+            let converted = self.store.costDisplayCurrency.amount(
+                fromUSD: accumulatedUSD,
+                exchangeRate: self.store.exchangeRateQuote) ?? displayAmount
+            return CostPoint(id: record.id, timestamp: record.timestamp, amount: converted)
         }
     }
 
@@ -48,16 +82,30 @@ struct HistoryView: View {
                 }
                 .pickerStyle(.segmented)
                 .frame(width: 240)
+
+                Picker(
+                    AppLocalization.string("history.metric"),
+                    selection: self.$metric)
+                {
+                    Text(AppLocalization.string("history.metric.quota"))
+                        .tag(HistoryMetric.quota)
+                    Text(AppLocalization.string("history.metric.cost"))
+                        .tag(HistoryMetric.cost)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 160)
                 Spacer()
             }
 
-            if self.visibleRecords.flatMap(\.windows).isEmpty {
+            if self.metric == .quota && self.visibleRecords.flatMap(\.windows).isEmpty
+                || self.metric == .cost && self.costPoints.isEmpty
+            {
                 ContentUnavailableView(
                     AppLocalization.string("history.empty.title"),
                     systemImage: "chart.xyaxis.line",
                     description: Text(AppLocalization.string("history.empty.description")))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
+            } else if self.metric == .quota {
                 Chart {
                     ForEach(self.visibleRecords) { record in
                         ForEach(record.windows) { window in
@@ -79,6 +127,18 @@ struct HistoryView: View {
                 }
                 .chartYScale(domain: 0...100)
                 .chartYAxisLabel(AppLocalization.string("history.percentLeft"))
+            } else {
+                Chart(self.costPoints) { point in
+                    LineMark(
+                        x: .value(AppLocalization.string("history.time"), point.timestamp),
+                        y: .value(AppLocalization.string("history.cost"), point.amount))
+                        .interpolationMethod(.monotone)
+                    AreaMark(
+                        x: .value(AppLocalization.string("history.time"), point.timestamp),
+                        y: .value(AppLocalization.string("history.cost"), point.amount))
+                        .foregroundStyle(.blue.opacity(0.12))
+                }
+                .chartYAxisLabel(AppLocalization.string("history.cost"))
             }
 
             HStack {

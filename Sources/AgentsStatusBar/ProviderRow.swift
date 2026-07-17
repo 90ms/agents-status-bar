@@ -107,17 +107,8 @@ struct ProviderRow: View {
     }
 
     private func formattedCost(_ amountUSD: Double) -> String? {
-        switch self.costCurrency {
-        case .usd:
-            let digits = amountUSD < 0.01 ? 4 : 2
-            return "$" + amountUSD.formatted(
-                .number.precision(.fractionLength(digits)))
-        case .krw:
-            guard let exchangeRate else { return nil }
-            let amountKRW = amountUSD * exchangeRate.rate
-            let digits = amountKRW < 1 ? 2 : 0
-            return "₩" + amountKRW.formatted(
-                .number.precision(.fractionLength(digits)))
-        }
+        self.costCurrency.formatted(
+            amountUSD: amountUSD,
+            exchangeRate: self.exchangeRate)
     }
 }

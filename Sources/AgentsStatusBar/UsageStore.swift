@@ -19,6 +19,9 @@ final class UsageStore: ObservableObject {
     @Published private(set) var costDisplayCurrency: CostDisplayCurrency
     @Published private(set) var exchangeRateQuote: ExchangeRateQuote?
     @Published private(set) var appLanguage: AppLanguage
+    @Published private(set) var monthlyBudgetEnabled: Bool
+    @Published private(set) var monthlyBudgetAmount: Double
+    @Published private(set) var monthlyBudgetCurrency: CostDisplayCurrency
 
     private let providers: [any UsageProviding]
     private var refreshLoop: Task<Void, Never>?
@@ -32,6 +35,9 @@ final class UsageStore: ObservableObject {
     private static let criticalThresholdKey = "usageNotificationCriticalThreshold"
     private static let notificationProviderIDsKey = "usageNotificationProviderIDs"
     private static let costDisplayCurrencyKey = "costDisplayCurrency"
+    private static let monthlyBudgetEnabledKey = "monthlyBudgetEnabled"
+    private static let monthlyBudgetAmountKey = "monthlyBudgetAmount"
+    private static let monthlyBudgetCurrencyKey = "monthlyBudgetCurrency"
 
     init(providers: [any UsageProviding] = ProviderRegistry.defaultProviders()) {
         self.providers = providers
@@ -52,11 +58,19 @@ final class UsageStore: ObservableObject {
         self.launchAtLoginEnabled = launchAtLoginController.isEnabled
         self.launchAtLoginMessage = launchAtLoginController.statusMessage
         self.historyRecords = []
-        self.costDisplayCurrency = UserDefaults.standard.string(
+        let costDisplayCurrency = UserDefaults.standard.string(
             forKey: Self.costDisplayCurrencyKey)
             .flatMap(CostDisplayCurrency.init(rawValue:)) ?? .defaultValue
+        self.costDisplayCurrency = costDisplayCurrency
         self.exchangeRateQuote = nil
         self.appLanguage = .savedValue
+        self.monthlyBudgetEnabled = UserDefaults.standard.bool(
+            forKey: Self.monthlyBudgetEnabledKey)
+        self.monthlyBudgetAmount = UserDefaults.standard.object(
+            forKey: Self.monthlyBudgetAmountKey) as? Double ?? 25
+        self.monthlyBudgetCurrency = UserDefaults.standard.string(
+            forKey: Self.monthlyBudgetCurrencyKey)
+            .flatMap(CostDisplayCurrency.init(rawValue:)) ?? costDisplayCurrency
         let knownIDs = Set(providers.map { $0.descriptor.id })
         let enabledIDs: Set<ProviderID>
         if let stored = UserDefaults.standard.stringArray(forKey: Self.enabledProvidersKey) {
@@ -77,6 +91,7 @@ final class UsageStore: ObservableObject {
             guard let self else { return }
             self.historyRecords = (try? await self.historyStore.records()) ?? []
             await self.refreshExchangeRate()
+            self.processBudgetAlert()
         }
     }
 
@@ -125,6 +140,7 @@ final class UsageStore: ObservableObject {
             // History is an optional local enhancement and must not fail provider refreshes.
         }
         await self.refreshExchangeRate()
+        self.processBudgetAlert()
         self.isRefreshing = false
     }
 
@@ -211,6 +227,24 @@ final class UsageStore: ObservableObject {
         }
     }
 
+    func setMonthlyBudgetEnabled(_ enabled: Bool) {
+        self.monthlyBudgetEnabled = enabled
+        UserDefaults.standard.set(enabled, forKey: Self.monthlyBudgetEnabledKey)
+        self.processBudgetAlert()
+    }
+
+    func setMonthlyBudgetAmount(_ amount: Double) {
+        self.monthlyBudgetAmount = max(amount, 0)
+        UserDefaults.standard.set(self.monthlyBudgetAmount, forKey: Self.monthlyBudgetAmountKey)
+        self.processBudgetAlert()
+    }
+
+    func setMonthlyBudgetCurrency(_ currency: CostDisplayCurrency) {
+        self.monthlyBudgetCurrency = currency
+        UserDefaults.standard.set(currency.rawValue, forKey: Self.monthlyBudgetCurrencyKey)
+        self.processBudgetAlert()
+    }
+
     func refreshExchangeRate() async {
         if let quote = try? await self.exchangeRateClient.quote() {
             self.exchangeRateQuote = quote
@@ -240,5 +274,35 @@ final class UsageStore: ObservableObject {
 
     var descriptors: [ProviderDescriptor] {
         self.providers.map(\.descriptor)
+    }
+
+    var monthlyEstimatedSpendUSD: Double {
+        UsageCostSummary.accumulatedUSD(
+            in: self.historyRecords,
+            since: Calendar.current.dateInterval(of: .month, for: .now)?.start ?? .distantPast)
+    }
+
+    var monthlyBudgetUSD: Double? {
+        guard self.monthlyBudgetEnabled, self.monthlyBudgetAmount > 0 else { return nil }
+        return self.monthlyBudgetCurrency.usdAmount(
+            from: self.monthlyBudgetAmount,
+            exchangeRate: self.exchangeRateQuote)
+    }
+
+    private func processBudgetAlert() {
+        guard let budgetUSD = self.monthlyBudgetUSD,
+              budgetUSD > 0,
+              let spent = self.costDisplayCurrency.formatted(
+                  amountUSD: self.monthlyEstimatedSpendUSD,
+                  exchangeRate: self.exchangeRateQuote),
+              let budget = self.costDisplayCurrency.formatted(
+                  amountUSD: budgetUSD,
+                  exchangeRate: self.exchangeRateQuote)
+        else { return }
+        self.notificationController.processBudget(
+            spentUSD: self.monthlyEstimatedSpendUSD,
+            budgetUSD: budgetUSD,
+            spentText: spent,
+            budgetText: budget)
     }
 }

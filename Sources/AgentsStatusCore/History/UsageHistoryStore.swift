@@ -7,6 +7,7 @@ public struct UsageHistoryRecord: Identifiable, Codable, Hashable, Sendable {
     public let providerName: String
     public let windows: [WindowSample]
     public let tokenTotal: Int64?
+    public let costUSD: Double?
 
     public init(
         id: UUID = UUID(),
@@ -14,7 +15,8 @@ public struct UsageHistoryRecord: Identifiable, Codable, Hashable, Sendable {
         providerID: ProviderID,
         providerName: String,
         windows: [WindowSample],
-        tokenTotal: Int64?)
+        tokenTotal: Int64?,
+        costUSD: Double? = nil)
     {
         self.id = id
         self.timestamp = timestamp
@@ -22,6 +24,7 @@ public struct UsageHistoryRecord: Identifiable, Codable, Hashable, Sendable {
         self.providerName = providerName
         self.windows = windows
         self.tokenTotal = tokenTotal
+        self.costUSD = costUSD
     }
 
     public struct WindowSample: Identifiable, Codable, Hashable, Sendable {
@@ -93,7 +96,8 @@ public actor UsageHistoryStore {
                         label: $0.label,
                         remainingPercent: $0.remainingPercent)
                 },
-                tokenTotal: snapshot.tokenUsage?.totalTokens))
+                tokenTotal: snapshot.tokenUsage?.totalTokens,
+                costUSD: snapshot.costEstimate?.amountUSD))
         }
 
         records.sort { $0.timestamp < $1.timestamp }

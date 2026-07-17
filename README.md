@@ -16,6 +16,7 @@ Agents Status Bar keeps the limits you care about in one small menu:
 
 - remaining quota, reset time, and local token totals;
 - API-price-equivalent token cost estimates in USD or KRW;
+- observed cost history plus optional monthly budget progress and 50%, 80%, and 100% alerts;
 - daily USD/KRW conversion with the applied ECB rate and rate date;
 - 30-day local usage history with 1-day, 7-day, and 30-day charts;
 - visible data source and last successful update time;
@@ -49,6 +50,8 @@ Cost is an estimate of what the locally observed tokens would cost at published 
 - Claude estimates cover today's deduplicated local messages and account for input, 5-minute and 1-hour cache writes, cache reads, and output.
 - Grok cost is not estimated yet because the local signal does not provide a billable input/output breakdown.
 - Unknown models are left without a cost instead of being mapped to a guessed price.
+
+Monthly totals are reconstructed from positive changes in the cumulative cost samples and scope resets. They include only usage observed while the app is running and recording history, so they remain estimates rather than billing records.
 
 The bundled model prices follow the official [OpenAI model pricing](https://developers.openai.com/api/docs/models) and [Anthropic pricing](https://platform.claude.com/docs/en/about-claude/pricing) pages. USD/KRW is checked once per Seoul calendar day through [Frankfurter](https://frankfurter.dev/) using its ECB provider. The settings screen shows both the applied rate and its publication date; weekends and holidays may therefore use the latest earlier ECB date.
 

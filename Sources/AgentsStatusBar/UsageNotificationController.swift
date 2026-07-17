@@ -90,6 +90,37 @@ final class UsageNotificationController: NSObject, UNUserNotificationCenterDeleg
             trigger: nil))
     }
 
+    func processBudget(
+        spentUSD: Double,
+        budgetUSD: Double,
+        spentText: String,
+        budgetText: String)
+    {
+        guard self.isEnabled, budgetUSD > 0 else { return }
+        let ratio = spentUSD / budgetUSD
+        let components = Calendar.current.dateComponents([.year, .month], from: .now)
+        let monthKey = String(format: "%04d-%02d", components.year ?? 0, components.month ?? 0)
+        let alreadyDelivered = Set(self.deliveredIdentifiers)
+
+        for threshold in [50, 80, 100] where ratio * 100 >= Double(threshold) {
+            let identifier = "budget-\(monthKey)-\(threshold)"
+            guard !alreadyDelivered.contains(identifier) else { continue }
+            let content = UNMutableNotificationContent()
+            content.title = AppLocalization.format("notification.budget.title", threshold)
+            content.body = AppLocalization.format(
+                "notification.budget.body",
+                spentText,
+                budgetText)
+            content.sound = .default
+            self.center.add(UNNotificationRequest(
+                identifier: identifier,
+                content: content,
+                trigger: nil))
+            self.deliveredIdentifiers.append(identifier)
+        }
+        self.defaults.set(self.deliveredIdentifiers, forKey: Self.deliveredIdentifiersKey)
+    }
+
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,

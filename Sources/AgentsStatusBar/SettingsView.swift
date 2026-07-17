@@ -192,6 +192,59 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
 
+            Section(AppLocalization.string("settings.budget.title")) {
+                Toggle(isOn: Binding(
+                    get: { self.store.monthlyBudgetEnabled },
+                    set: { self.store.setMonthlyBudgetEnabled($0) }))
+                {
+                    Text(AppLocalization.string("settings.budget.enabled"))
+                }
+                if self.store.monthlyBudgetEnabled {
+                    HStack {
+                        TextField(
+                            AppLocalization.string("settings.budget.amount"),
+                            value: Binding(
+                                get: { self.store.monthlyBudgetAmount },
+                                set: { self.store.setMonthlyBudgetAmount($0) }),
+                            format: .number.precision(.fractionLength(0...2)))
+                            .frame(width: 140)
+                        Picker(
+                            AppLocalization.string("settings.cost.currency"),
+                            selection: Binding(
+                                get: { self.store.monthlyBudgetCurrency },
+                                set: { self.store.setMonthlyBudgetCurrency($0) }))
+                        {
+                            Text("USD").tag(CostDisplayCurrency.usd)
+                            Text("KRW").tag(CostDisplayCurrency.krw)
+                        }
+                        .pickerStyle(.segmented)
+                    }
+
+                    if let budgetUSD = self.store.monthlyBudgetUSD,
+                       let spent = self.store.monthlyBudgetCurrency.formatted(
+                           amountUSD: self.store.monthlyEstimatedSpendUSD,
+                           exchangeRate: self.store.exchangeRateQuote),
+                       let budget = self.store.monthlyBudgetCurrency.formatted(
+                           amountUSD: budgetUSD,
+                           exchangeRate: self.store.exchangeRateQuote)
+                    {
+                        ProgressView(
+                            value: min(self.store.monthlyEstimatedSpendUSD, budgetUSD),
+                            total: budgetUSD)
+                        Text(AppLocalization.format("settings.budget.spent", spent, budget))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text(AppLocalization.string("settings.budget.noRate"))
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
+                    Text(AppLocalization.string("settings.budget.description"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section(AppLocalization.string("history.title")) {
                 Button(AppLocalization.string("history.open")) {
                     self.openWindow(id: "usage-history")
