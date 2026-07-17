@@ -18,6 +18,7 @@ final class UsageStore: ObservableObject {
     @Published private(set) var activityAnimationsEnabled: Bool
     @Published private(set) var activityWindowSeconds: Int
     @Published private(set) var providerActivities: [ProviderID: ProviderActivitySnapshot]
+    @Published private(set) var activityAnimationPulse: Int
     @Published private(set) var launchAtLoginEnabled: Bool
     @Published private(set) var launchAtLoginMessage: String?
     @Published private(set) var historyRecords: [UsageHistoryRecord]
@@ -109,6 +110,7 @@ final class UsageStore: ObservableObject {
                 providerID: $0.descriptor.id,
                 state: .unknown))
         })
+        self.activityAnimationPulse = 0
         self.launchAtLoginEnabled = launchAtLoginController.isEnabled
         self.launchAtLoginMessage = launchAtLoginController.statusMessage
         self.historyRecords = []
@@ -498,6 +500,9 @@ final class UsageStore: ObservableObject {
         self.providerActivities = Dictionary(uniqueKeysWithValues: results.map {
             ($0.providerID, $0)
         })
+        if self.hasActiveSession {
+            self.activityAnimationPulse &+= 1
+        }
     }
 
     private func refreshPricingCatalogIfNeeded(force: Bool = false) async {
