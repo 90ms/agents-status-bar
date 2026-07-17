@@ -123,7 +123,10 @@ public struct QuotaWindow: Identifiable, Codable, Hashable, Sendable {
 
 public struct TokenUsage: Codable, Hashable, Sendable {
     public let label: String
+    public let modelID: String?
     public let inputTokens: Int64?
+    public let cacheCreationInputTokens: Int64?
+    public let cacheCreation1hInputTokens: Int64?
     public let cachedInputTokens: Int64?
     public let outputTokens: Int64?
     public let reasoningTokens: Int64?
@@ -131,18 +134,36 @@ public struct TokenUsage: Codable, Hashable, Sendable {
 
     public init(
         label: String,
+        modelID: String? = nil,
         inputTokens: Int64? = nil,
+        cacheCreationInputTokens: Int64? = nil,
+        cacheCreation1hInputTokens: Int64? = nil,
         cachedInputTokens: Int64? = nil,
         outputTokens: Int64? = nil,
         reasoningTokens: Int64? = nil,
         totalTokens: Int64)
     {
         self.label = label
+        self.modelID = modelID
         self.inputTokens = inputTokens
+        self.cacheCreationInputTokens = cacheCreationInputTokens
+        self.cacheCreation1hInputTokens = cacheCreation1hInputTokens
         self.cachedInputTokens = cachedInputTokens
         self.outputTokens = outputTokens
         self.reasoningTokens = reasoningTokens
         self.totalTokens = totalTokens
+    }
+}
+
+public struct TokenCostEstimate: Hashable, Sendable {
+    public let label: String
+    public let amountUSD: Double
+    public let modelIDs: [String]
+
+    public init(label: String, amountUSD: Double, modelIDs: [String]) {
+        self.label = label
+        self.amountUSD = amountUSD
+        self.modelIDs = modelIDs
     }
 }
 
@@ -164,6 +185,7 @@ public struct ProviderSnapshot: Identifiable, Hashable, Sendable {
     public let source: UsageDataSource?
     public let quotaWindows: [QuotaWindow]
     public let tokenUsage: TokenUsage?
+    public let costEstimate: TokenCostEstimate?
     public let credits: CreditBalance?
     public let detail: String?
     public let updatedAt: Date
@@ -176,6 +198,7 @@ public struct ProviderSnapshot: Identifiable, Hashable, Sendable {
         source: UsageDataSource?,
         quotaWindows: [QuotaWindow] = [],
         tokenUsage: TokenUsage? = nil,
+        costEstimate: TokenCostEstimate? = nil,
         credits: CreditBalance? = nil,
         detail: String? = nil,
         updatedAt: Date = .now)
@@ -185,6 +208,7 @@ public struct ProviderSnapshot: Identifiable, Hashable, Sendable {
         self.source = source
         self.quotaWindows = quotaWindows
         self.tokenUsage = tokenUsage
+        self.costEstimate = costEstimate
         self.credits = credits
         self.detail = detail
         self.updatedAt = updatedAt

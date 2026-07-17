@@ -3,6 +3,8 @@ import SwiftUI
 
 struct ProviderRow: View {
     let snapshot: ProviderSnapshot
+    let costCurrency: CostDisplayCurrency
+    let exchangeRate: ExchangeRateQuote?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
@@ -43,6 +45,20 @@ struct ProviderRow: View {
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            }
+
+            if let estimate = snapshot.costEstimate,
+               let formattedCost = self.formattedCost(estimate.amountUSD)
+            {
+                HStack {
+                    Text(AppLocalization.string("usage.apiCostEstimate"))
+                    Spacer()
+                    Text(formattedCost)
+                        .monospacedDigit()
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .help(estimate.modelIDs.joined(separator: ", "))
             }
 
             if let detail = snapshot.detail {
@@ -87,6 +103,21 @@ struct ProviderRow: View {
         case ..<10: .red
         case ..<30: .orange
         default: .accentColor
+        }
+    }
+
+    private func formattedCost(_ amountUSD: Double) -> String? {
+        switch self.costCurrency {
+        case .usd:
+            let digits = amountUSD < 0.01 ? 4 : 2
+            return "$" + amountUSD.formatted(
+                .number.precision(.fractionLength(digits)))
+        case .krw:
+            guard let exchangeRate else { return nil }
+            let amountKRW = amountUSD * exchangeRate.rate
+            let digits = amountKRW < 1 ? 2 : 0
+            return "₩" + amountKRW.formatted(
+                .number.precision(.fractionLength(digits)))
         }
     }
 }

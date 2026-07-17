@@ -41,6 +41,7 @@ public struct CodexUsageProvider: UsageProviding {
                 source: .officialAPI,
                 quotaWindows: accountUsage.quotaWindows(),
                 tokenUsage: localUsage?.tokenUsage,
+                costEstimate: localUsage?.costEstimate,
                 credits: accountUsage.creditBalance,
                 detail: detail,
                 updatedAt: result.fetchedAt)
@@ -72,6 +73,7 @@ public struct CodexUsageProvider: UsageProviding {
                 source: .localSessionLog,
                 quotaWindows: localUsage.quotaWindows,
                 tokenUsage: localUsage.tokenUsage,
+                costEstimate: localUsage.costEstimate,
                 credits: localUsage.credits,
                 detail: errorMessage.map { "Local usage fallback · \($0)" }
                     ?? "Latest local Codex session",
@@ -89,13 +91,19 @@ struct CodexParsedUsage {
     let timestamp: Date?
     let quotaWindows: [QuotaWindow]
     let tokenUsage: TokenUsage
+    let costEstimate: TokenCostEstimate?
     let credits: CreditBalance?
 }
 
 enum CodexLogParser {
     static func latestUsage(in file: URL) -> CodexParsedUsage? {
-        for line in LocalFiles.lines(in: file).reversed() {
-            guard let event = try? JSONDecoder().decode(CodexEvent.self, from: line),
+        let events = LocalFiles.lines(in: file).compactMap {
+            try? JSONDecoder().decode(CodexEvent.self, from: $0)
+        }
+        let modelID = events.reversed().compactMap(\.payload?.model).first
+
+        for event in events.reversed() {
+            guard
                   event.type == "event_msg",
                   event.payload?.type == "token_count",
                   let usage = event.payload?.info?.totalTokenUsage
@@ -113,16 +121,19 @@ enum CodexLogParser {
             let credits = limits?.credits.map {
                 CreditBalance(balance: $0.balance, hasCredits: $0.hasCredits, unlimited: $0.unlimited)
             }
+            let tokenUsage = TokenUsage(
+                label: "Latest session",
+                modelID: modelID,
+                inputTokens: max(usage.inputTokens - usage.cachedInputTokens, 0),
+                cachedInputTokens: usage.cachedInputTokens,
+                outputTokens: max(usage.outputTokens - usage.reasoningOutputTokens, 0),
+                reasoningTokens: usage.reasoningOutputTokens,
+                totalTokens: usage.totalTokens)
             return CodexParsedUsage(
                 timestamp: TimestampParser.parse(event.timestamp),
                 quotaWindows: windows,
-                tokenUsage: TokenUsage(
-                    label: "Latest session",
-                    inputTokens: usage.inputTokens,
-                    cachedInputTokens: usage.cachedInputTokens,
-                    outputTokens: usage.outputTokens,
-                    reasoningTokens: usage.reasoningOutputTokens,
-                    totalTokens: usage.totalTokens),
+                tokenUsage: tokenUsage,
+                costEstimate: TokenPricingCatalog.estimate(providerID: .codex, usage: tokenUsage),
                 credits: credits)
         }
         return nil
@@ -135,12 +146,13 @@ private struct CodexEvent: Decodable {
     let payload: Payload?
 
     struct Payload: Decodable {
-        let type: String
+        let type: String?
+        let model: String?
         let info: Info?
         let rateLimits: RateLimits?
 
         enum CodingKeys: String, CodingKey {
-            case type, info
+            case type, model, info
             case rateLimits = "rate_limits"
         }
     }

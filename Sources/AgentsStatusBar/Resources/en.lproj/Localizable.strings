@@ -8,6 +8,7 @@
 "empty.description" = "Enable a provider in Settings.";
 "usage.percentLeft" = "% left";
 "usage.tokens" = "tokens";
+"usage.apiCostEstimate" = "API cost estimate";
 "usage.updated" = "Updated";
 "source.localSessionLog" = "Local session";
 "source.localProtocol" = "Local protocol";
@@ -26,6 +27,13 @@
 "settings.menuBar.lowest" = "Show lowest remaining usage";
 "settings.launchAtLogin" = "Launch at login";
 "settings.launchAtLogin.approval" = "Approval is required in System Settings → General → Login Items.";
+"settings.cost.title" = "Cost Estimate";
+"settings.cost.currency" = "Display currency";
+"settings.cost.usd" = "USD ($)";
+"settings.cost.krw" = "KRW (₩)";
+"settings.cost.rate" = "1 USD = ₩%@ · ECB rate dated %@";
+"settings.cost.rateUnavailable" = "The USD/KRW exchange rate is not available yet.";
+"settings.cost.disclaimer" = "Calculated from local token counts using public API prices. This is not your Codex, Claude, or Grok subscription bill.";
 "settings.privacy" = "Privacy";
 "settings.privacy.description" = "Usage is read from known local CLI session files. Codex and Claude quotas reuse their existing CLI sign-ins with account usage endpoints. Prompts, responses, cookies, and authentication tokens are not stored by this app.";
 "notification.usageLow.title" = "%@ usage is low";

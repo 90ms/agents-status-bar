@@ -8,6 +8,7 @@
 "empty.description" = "설정에서 제공자를 활성화하세요.";
 "usage.percentLeft" = "% 남음";
 "usage.tokens" = "토큰";
+"usage.apiCostEstimate" = "API 비용 추정";
 "usage.updated" = "업데이트";
 "source.localSessionLog" = "로컬 세션";
 "source.localProtocol" = "로컬 프로토콜";
@@ -26,6 +27,13 @@
 "settings.menuBar.lowest" = "가장 낮은 잔여량 표시";
 "settings.launchAtLogin" = "로그인 시 실행";
 "settings.launchAtLogin.approval" = "시스템 설정 → 일반 → 로그인 항목에서 승인이 필요합니다.";
+"settings.cost.title" = "비용 추정";
+"settings.cost.currency" = "표시 통화";
+"settings.cost.usd" = "달러 ($)";
+"settings.cost.krw" = "원화 (₩)";
+"settings.cost.rate" = "1 USD = ₩%@ · ECB %@ 기준";
+"settings.cost.rateUnavailable" = "아직 USD/KRW 환율을 가져오지 못했습니다.";
+"settings.cost.disclaimer" = "로컬 토큰 수와 공개 API 단가로 계산한 추정치입니다. Codex, Claude 또는 Grok 구독 청구액과는 다릅니다.";
 "settings.privacy" = "개인정보 보호";
 "settings.privacy.description" = "알려진 로컬 CLI 세션 파일에서 사용량을 읽습니다. Codex와 Claude 쿼터는 기존 CLI 로그인과 계정 사용량 API를 재사용합니다. 프롬프트, 응답, 쿠키 및 인증 토큰은 저장하지 않습니다.";
 "notification.usageLow.title" = "%@ 사용량이 부족합니다";

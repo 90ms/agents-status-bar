@@ -87,6 +87,35 @@ struct SettingsView: View {
                 }
             }
 
+            Section(AppLocalization.string("settings.cost.title")) {
+                Picker(
+                    AppLocalization.string("settings.cost.currency"),
+                    selection: Binding(
+                        get: { self.store.costDisplayCurrency },
+                        set: { self.store.setCostDisplayCurrency($0) }))
+                {
+                    Text(AppLocalization.string("settings.cost.usd")).tag(CostDisplayCurrency.usd)
+                    Text(AppLocalization.string("settings.cost.krw")).tag(CostDisplayCurrency.krw)
+                }
+                .pickerStyle(.segmented)
+
+                if let quote = self.store.exchangeRateQuote {
+                    Text(AppLocalization.format(
+                        "settings.cost.rate",
+                        quote.rate.formatted(.number.precision(.fractionLength(2))),
+                        quote.rateDate))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text(AppLocalization.string("settings.cost.rateUnavailable"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Text(AppLocalization.string("settings.cost.disclaimer"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Section(AppLocalization.string("history.title")) {
                 Button(AppLocalization.string("history.open")) {
                     self.openWindow(id: "usage-history")
@@ -103,7 +132,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 460, height: 300)
+        .frame(width: 480, height: 560)
         .padding()
     }
 }

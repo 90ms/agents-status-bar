@@ -16,26 +16,32 @@ final class UsageStore: ObservableObject {
     @Published private(set) var launchAtLoginEnabled: Bool
     @Published private(set) var launchAtLoginMessage: String?
     @Published private(set) var historyRecords: [UsageHistoryRecord]
+    @Published private(set) var costDisplayCurrency: CostDisplayCurrency
+    @Published private(set) var exchangeRateQuote: ExchangeRateQuote?
 
     private let providers: [any UsageProviding]
     private var refreshLoop: Task<Void, Never>?
     private let notificationController: UsageNotificationController
     private let launchAtLoginController: LaunchAtLoginController
     private let historyStore: UsageHistoryStore
+    private let exchangeRateClient: DailyExchangeRateClient
     private static let enabledProvidersKey = "enabledProviderIDs"
     private static let showsRemainingInMenuBarKey = "showsRemainingInMenuBar"
     private static let warningThresholdKey = "usageNotificationWarningThreshold"
     private static let criticalThresholdKey = "usageNotificationCriticalThreshold"
     private static let notificationProviderIDsKey = "usageNotificationProviderIDs"
+    private static let costDisplayCurrencyKey = "costDisplayCurrency"
 
     init(providers: [any UsageProviding] = ProviderRegistry.defaultProviders()) {
         self.providers = providers
         let notificationController = UsageNotificationController()
         let launchAtLoginController = LaunchAtLoginController()
         let historyStore = UsageHistoryStore()
+        let exchangeRateClient = DailyExchangeRateClient()
         self.notificationController = notificationController
         self.launchAtLoginController = launchAtLoginController
         self.historyStore = historyStore
+        self.exchangeRateClient = exchangeRateClient
         self.notificationsEnabled = notificationController.isEnabled
         self.notificationSettingsMessage = nil
         self.warningThreshold = UserDefaults.standard.object(forKey: Self.warningThresholdKey) as? Int ?? 30
@@ -45,6 +51,10 @@ final class UsageStore: ObservableObject {
         self.launchAtLoginEnabled = launchAtLoginController.isEnabled
         self.launchAtLoginMessage = launchAtLoginController.statusMessage
         self.historyRecords = []
+        self.costDisplayCurrency = UserDefaults.standard.string(
+            forKey: Self.costDisplayCurrencyKey)
+            .flatMap(CostDisplayCurrency.init(rawValue:)) ?? .defaultValue
+        self.exchangeRateQuote = nil
         let knownIDs = Set(providers.map { $0.descriptor.id })
         let enabledIDs: Set<ProviderID>
         if let stored = UserDefaults.standard.stringArray(forKey: Self.enabledProvidersKey) {
@@ -64,6 +74,7 @@ final class UsageStore: ObservableObject {
         Task { [weak self] in
             guard let self else { return }
             self.historyRecords = (try? await self.historyStore.records()) ?? []
+            await self.refreshExchangeRate()
         }
     }
 
@@ -111,6 +122,7 @@ final class UsageStore: ObservableObject {
         } catch {
             // History is an optional local enhancement and must not fail provider refreshes.
         }
+        await self.refreshExchangeRate()
         self.isRefreshing = false
     }
 
@@ -178,6 +190,20 @@ final class UsageStore: ObservableObject {
         Task {
             try? await self.historyStore.clear()
             self.historyRecords = []
+        }
+    }
+
+    func setCostDisplayCurrency(_ currency: CostDisplayCurrency) {
+        self.costDisplayCurrency = currency
+        UserDefaults.standard.set(currency.rawValue, forKey: Self.costDisplayCurrencyKey)
+        if currency == .krw, self.exchangeRateQuote == nil {
+            Task { await self.refreshExchangeRate() }
+        }
+    }
+
+    func refreshExchangeRate() async {
+        if let quote = try? await self.exchangeRateClient.quote() {
+            self.exchangeRateQuote = quote
         }
     }
 

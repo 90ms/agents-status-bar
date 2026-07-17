@@ -33,7 +33,8 @@ public struct ClaudeUsageProvider: UsageProviding {
             extension: "jsonl",
             modifiedAfter: startOfDay,
             limit: 200)
-        let usage = ClaudeLogParser.aggregate(files: files, since: startOfDay)
+        let aggregate = ClaudeLogParser.aggregate(files: files, since: startOfDay)
+        let usage = aggregate.tokenUsage
         let localTokenUsage = usage.totalTokens > 0
             ? usage
             : files.isEmpty ? nil : TokenUsage(label: "Today", totalTokens: 0)
@@ -53,14 +54,20 @@ public struct ClaudeUsageProvider: UsageProviding {
                 source: .officialAPI,
                 quotaWindows: oauthUsage.quotaWindows(),
                 tokenUsage: localTokenUsage,
+                costEstimate: localTokenUsage == nil ? nil : aggregate.costEstimate,
                 detail: detail.isEmpty ? "Claude Code OAuth" : detail,
                 updatedAt: result.fetchedAt)
         } catch {
-            return self.localFallback(files: files, usage: usage, oauthError: error)
+            return self.localFallback(files: files, aggregate: aggregate, oauthError: error)
         }
     }
 
-    private func localFallback(files: [URL], usage: TokenUsage, oauthError: Error) -> ProviderSnapshot {
+    private func localFallback(
+        files: [URL],
+        aggregate: ClaudeAggregatedUsage,
+        oauthError: Error) -> ProviderSnapshot
+    {
+        let usage = aggregate.tokenUsage
         let errorMessage = (oauthError as? LocalizedError)?.errorDescription
         guard !files.isEmpty else {
             return .init(
@@ -85,17 +92,29 @@ public struct ClaudeUsageProvider: UsageProviding {
             availability: .available,
             source: .localSessionLog,
             tokenUsage: usage,
+            costEstimate: aggregate.costEstimate,
             detail: errorMessage.map { "Local usage fallback · \($0)" }
                 ?? "Today across local Claude Code sessions")
     }
 }
 
+struct ClaudeAggregatedUsage {
+    let tokenUsage: TokenUsage
+    let costEstimate: TokenCostEstimate?
+}
+
 enum ClaudeLogParser {
-    static func aggregate(files: [URL], since startDate: Date) -> TokenUsage {
+    static func aggregate(files: [URL], since startDate: Date) -> ClaudeAggregatedUsage {
         var seenMessageIDs: Set<String> = []
         var input: Int64 = 0
+        var cacheCreation: Int64 = 0
+        var cacheCreation1h: Int64 = 0
         var cached: Int64 = 0
         var output: Int64 = 0
+        var amountUSD = 0.0
+        var modelIDs: Set<String> = []
+        var allRecordsPriced = true
+        var recordCount = 0
 
         for file in files {
             for line in LocalFiles.lines(in: file) {
@@ -107,18 +126,55 @@ enum ClaudeLogParser {
 
                 let identifier = record.message?.id ?? record.uuid ?? "\(file.path):\(record.timestamp ?? "")"
                 guard seenMessageIDs.insert(identifier).inserted else { continue }
-                input += usage.inputTokens + usage.cacheCreationInputTokens
+                recordCount += 1
+                input += usage.inputTokens
+                let oneHourCacheCreation = usage.cacheCreation?.ephemeral1hInputTokens ?? 0
+                let fiveMinuteCacheCreation = max(
+                    usage.cacheCreationInputTokens - oneHourCacheCreation,
+                    0)
+                cacheCreation += fiveMinuteCacheCreation
+                cacheCreation1h += oneHourCacheCreation
                 cached += usage.cacheReadInputTokens
                 output += usage.outputTokens
+                if let modelID = record.message?.model,
+                   let pricing = TokenPricingCatalog.pricing(
+                       providerID: .claude,
+                       modelID: modelID,
+                       at: timestamp)
+                {
+                    modelIDs.insert(modelID)
+                    amountUSD += pricing.estimate(TokenUsage(
+                        label: "Today",
+                        modelID: modelID,
+                        inputTokens: usage.inputTokens,
+                        cacheCreationInputTokens: fiveMinuteCacheCreation,
+                        cacheCreation1hInputTokens: oneHourCacheCreation,
+                        cachedInputTokens: usage.cacheReadInputTokens,
+                        outputTokens: usage.outputTokens,
+                        totalTokens: usage.inputTokens + usage.cacheCreationInputTokens
+                            + usage.cacheReadInputTokens + usage.outputTokens))
+                } else {
+                    allRecordsPriced = false
+                }
             }
         }
 
-        return TokenUsage(
+        let tokenUsage = TokenUsage(
             label: "Today",
+            modelID: modelIDs.count == 1 ? modelIDs.first : nil,
             inputTokens: input,
+            cacheCreationInputTokens: cacheCreation,
+            cacheCreation1hInputTokens: cacheCreation1h,
             cachedInputTokens: cached,
             outputTokens: output,
-            totalTokens: input + cached + output)
+            totalTokens: input + cacheCreation + cacheCreation1h + cached + output)
+        let estimate = recordCount > 0 && allRecordsPriced
+            ? TokenCostEstimate(
+                label: "Today",
+                amountUSD: amountUSD,
+                modelIDs: modelIDs.sorted())
+            : nil
+        return ClaudeAggregatedUsage(tokenUsage: tokenUsage, costEstimate: estimate)
     }
 }
 
@@ -129,6 +185,7 @@ private struct ClaudeRecord: Decodable {
 
     struct Message: Decodable {
         let id: String?
+        let model: String?
         let usage: Usage?
     }
 
@@ -137,12 +194,14 @@ private struct ClaudeRecord: Decodable {
         let cacheCreationInputTokens: Int64
         let cacheReadInputTokens: Int64
         let outputTokens: Int64
+        let cacheCreation: CacheCreation?
 
         enum CodingKeys: String, CodingKey {
             case inputTokens = "input_tokens"
             case cacheCreationInputTokens = "cache_creation_input_tokens"
             case cacheReadInputTokens = "cache_read_input_tokens"
             case outputTokens = "output_tokens"
+            case cacheCreation = "cache_creation"
         }
 
         init(from decoder: Decoder) throws {
@@ -155,6 +214,24 @@ private struct ClaudeRecord: Decodable {
                 Int64.self,
                 forKey: .cacheReadInputTokens) ?? 0
             self.outputTokens = try container.decodeIfPresent(Int64.self, forKey: .outputTokens) ?? 0
+            self.cacheCreation = try container.decodeIfPresent(
+                CacheCreation.self,
+                forKey: .cacheCreation)
+        }
+    }
+
+    struct CacheCreation: Decodable {
+        let ephemeral1hInputTokens: Int64
+
+        enum CodingKeys: String, CodingKey {
+            case ephemeral1hInputTokens = "ephemeral_1h_input_tokens"
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.ephemeral1hInputTokens = try container.decodeIfPresent(
+                Int64.self,
+                forKey: .ephemeral1hInputTokens) ?? 0
         }
     }
 }

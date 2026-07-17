@@ -34,7 +34,10 @@ struct AgentsStatusBarApp: App {
                 } else {
                     ForEach(Array(self.store.snapshots.enumerated()), id: \.element.id) { index, snapshot in
                         if index > 0 { Divider() }
-                        ProviderRow(snapshot: snapshot)
+                        ProviderRow(
+                            snapshot: snapshot,
+                            costCurrency: self.store.costDisplayCurrency,
+                            exchangeRate: self.store.exchangeRateQuote)
                     }
                 }
 

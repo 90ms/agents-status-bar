@@ -12,6 +12,12 @@ struct ProviderParserTests {
         let parsed = try #require(CodexLogParser.latestUsage(in: file))
 
         #expect(parsed.tokenUsage.totalTokens == 1750)
+        #expect(parsed.tokenUsage.modelID == "gpt-5.6-sol")
+        #expect(parsed.tokenUsage.inputTokens == 1000)
+        #expect(parsed.tokenUsage.cachedInputTokens == 500)
+        #expect(parsed.tokenUsage.outputTokens == 200)
+        #expect(parsed.tokenUsage.reasoningTokens == 50)
+        #expect(abs((parsed.costEstimate?.amountUSD ?? 0) - 0.01275) < 0.000_000_1)
         #expect(parsed.quotaWindows.count == 2)
         #expect(parsed.quotaWindows[0].usedPercent == 32)
         #expect(parsed.credits?.balance == "12.50")
@@ -52,12 +58,16 @@ struct ProviderParserTests {
             forResource: "claude-usage",
             withExtension: "jsonl",
             subdirectory: "Fixtures"))
-        let usage = ClaudeLogParser.aggregate(files: [file], since: .distantPast)
+        let aggregate = ClaudeLogParser.aggregate(files: [file], since: .distantPast)
+        let usage = aggregate.tokenUsage
 
-        #expect(usage.inputTokens == 120)
+        #expect(usage.inputTokens == 100)
+        #expect(usage.cacheCreationInputTokens == 20)
         #expect(usage.cachedInputTokens == 80)
         #expect(usage.outputTokens == 30)
         #expect(usage.totalTokens == 230)
+        #expect(usage.modelID == "claude-sonnet-4-6")
+        #expect(abs((aggregate.costEstimate?.amountUSD ?? 0) - 0.000849) < 0.000_000_1)
     }
 
     @Test
@@ -138,6 +148,30 @@ struct ProviderParserTests {
         let reloadedStore = UsageHistoryStore(fileURL: file)
         let reloadedRecords = try await reloadedStore.records()
         #expect(reloadedRecords == records)
+    }
+
+    @Test
+    func exchangeRateUsesSameDayCachedQuote() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appending(path: UUID().uuidString, directoryHint: .isDirectory)
+        let file = directory.appending(path: "rate.json")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let checkedAt = Date(timeIntervalSince1970: 1_784_240_000)
+        let expected = ExchangeRateQuote(
+            baseCurrency: "USD",
+            quoteCurrency: "KRW",
+            rate: 1479.45,
+            rateDate: "2026-07-16",
+            checkedAt: checkedAt)
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        try encoder.encode(expected).write(to: file)
+
+        let client = DailyExchangeRateClient(cacheURL: file)
+        let quote = try await client.quote(at: checkedAt.addingTimeInterval(60 * 60))
+
+        #expect(quote == expected)
     }
 
     @Test
