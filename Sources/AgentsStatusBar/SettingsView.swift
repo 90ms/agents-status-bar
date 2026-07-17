@@ -22,12 +22,47 @@ struct SettingsView: View {
                     get: { self.store.notificationsEnabled },
                     set: { self.store.setNotificationsEnabled($0) }))
                 {
-                    Text(AppLocalization.string("settings.notifications.thresholds"))
+                    Text(AppLocalization.string("settings.notifications.enabled"))
                 }
                 if let message = self.store.notificationSettingsMessage {
                     Text(message)
                         .font(.caption)
                         .foregroundStyle(.orange)
+                }
+                if self.store.notificationsEnabled {
+                    Picker(
+                        AppLocalization.string("settings.notifications.warning"),
+                        selection: Binding(
+                            get: { self.store.warningThreshold },
+                            set: { self.store.setWarningThreshold($0) }))
+                    {
+                        ForEach([50, 40, 30, 20], id: \.self) { value in
+                            Text(AppLocalization.format("settings.notifications.percentLeft", value)).tag(value)
+                        }
+                    }
+                    Picker(
+                        AppLocalization.string("settings.notifications.critical"),
+                        selection: Binding(
+                            get: { self.store.criticalThreshold },
+                            set: { self.store.setCriticalThreshold($0) }))
+                    {
+                        ForEach([15, 10, 5], id: \.self) { value in
+                            Text(AppLocalization.format("settings.notifications.percentLeft", value)).tag(value)
+                        }
+                    }
+                    ForEach(self.store.descriptors) { descriptor in
+                        Toggle(isOn: Binding(
+                            get: { self.store.isNotificationEnabled(for: descriptor.id) },
+                            set: { self.store.setNotificationEnabled($0, for: descriptor.id) }))
+                        {
+                            Text(AppLocalization.format(
+                                "settings.notifications.provider",
+                                descriptor.displayName))
+                        }
+                    }
+                    Button(AppLocalization.string("settings.notifications.test")) {
+                        self.store.sendTestNotification()
+                    }
                 }
             }
 

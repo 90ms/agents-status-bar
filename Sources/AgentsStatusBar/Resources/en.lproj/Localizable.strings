@@ -15,7 +15,12 @@
 "source.estimated" = "Estimated";
 "settings.providers" = "Providers";
 "settings.notifications" = "Notifications";
-"settings.notifications.thresholds" = "Warn when usage reaches 30% or 10% left";
+"settings.notifications.enabled" = "Low usage alerts";
+"settings.notifications.warning" = "Warning threshold";
+"settings.notifications.critical" = "Critical threshold";
+"settings.notifications.percentLeft" = "%d%% left";
+"settings.notifications.provider" = "%@ alerts";
+"settings.notifications.test" = "Send Test Notification";
 "settings.notifications.denied" = "Notifications are disabled in System Settings.";
 "settings.menuBar" = "Menu Bar";
 "settings.menuBar.lowest" = "Show lowest remaining usage";
@@ -25,3 +30,5 @@
 "settings.privacy.description" = "Usage is read from known local CLI session files. Codex and Claude quotas reuse their existing CLI sign-ins with account usage endpoints. Prompts, responses, cookies, and authentication tokens are not stored by this app.";
 "notification.usageLow.title" = "%@ usage is low";
 "notification.usageLow.body" = "%@: %d%% left";
+"notification.test.title" = "Agents Status Bar notifications are ready";
+"notification.test.body" = "You will be notified when an enabled quota reaches your thresholds.";

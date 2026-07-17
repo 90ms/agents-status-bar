@@ -42,10 +42,19 @@ final class UsageNotificationController: NSObject, UNUserNotificationCenterDeleg
         }
     }
 
-    func process(_ snapshots: [ProviderSnapshot]) {
+    func process(
+        _ snapshots: [ProviderSnapshot],
+        warningThreshold: Int,
+        criticalThreshold: Int,
+        enabledProviderIDs: Set<ProviderID>)
+    {
         guard self.isEnabled else { return }
         let alreadyDelivered = Set(self.deliveredIdentifiers)
-        let candidates = UsageAlertEvaluator.candidates(in: snapshots)
+        let candidates = UsageAlertEvaluator.candidates(
+            in: snapshots,
+            warningThreshold: warningThreshold,
+            criticalThreshold: criticalThreshold,
+            enabledProviderIDs: enabledProviderIDs)
             .filter { !alreadyDelivered.contains($0.identifier) }
 
         for candidate in candidates {
@@ -68,6 +77,17 @@ final class UsageNotificationController: NSObject, UNUserNotificationCenterDeleg
             self.deliveredIdentifiers = Array(self.deliveredIdentifiers.suffix(200))
         }
         self.defaults.set(self.deliveredIdentifiers, forKey: Self.deliveredIdentifiersKey)
+    }
+
+    func sendTest() {
+        let content = UNMutableNotificationContent()
+        content.title = AppLocalization.string("notification.test.title")
+        content.body = AppLocalization.string("notification.test.body")
+        content.sound = .default
+        self.center.add(UNNotificationRequest(
+            identifier: "usage-notification-test-\(UUID().uuidString)",
+            content: content,
+            trigger: nil))
     }
 
     nonisolated func userNotificationCenter(

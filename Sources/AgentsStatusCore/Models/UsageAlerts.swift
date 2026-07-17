@@ -21,17 +21,22 @@ public struct UsageAlertCandidate: Hashable, Sendable {
 }
 
 public enum UsageAlertEvaluator {
-    public static func candidates(in snapshots: [ProviderSnapshot]) -> [UsageAlertCandidate] {
-        snapshots.flatMap { snapshot -> [UsageAlertCandidate] in
-            guard snapshot.availability == .available else { return [] }
+    public static func candidates(
+        in snapshots: [ProviderSnapshot],
+        warningThreshold: Int = 30,
+        criticalThreshold: Int = 10,
+        enabledProviderIDs: Set<ProviderID>? = nil) -> [UsageAlertCandidate]
+    {
+        let thresholds = [criticalThreshold, warningThreshold].sorted()
+        return snapshots.flatMap { snapshot -> [UsageAlertCandidate] in
+            guard snapshot.availability == .available,
+                  enabledProviderIDs?.contains(snapshot.id) != false
+            else { return [] }
             return snapshot.quotaWindows.compactMap { window in
                 guard window.kind != .context else { return nil }
-                let threshold: Int
-                switch window.remainingPercent {
-                case ...10: threshold = 10
-                case ...30: threshold = 30
-                default: return nil
-                }
+                guard let threshold = thresholds.first(where: {
+                    window.remainingPercent <= Double($0)
+                }) else { return nil }
                 return UsageAlertCandidate(
                     providerID: snapshot.id,
                     providerName: snapshot.descriptor.displayName,

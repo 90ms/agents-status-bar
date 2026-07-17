@@ -85,7 +85,11 @@ struct ProviderParserTests {
                 QuotaWindow(id: "context", kind: .context, label: "Context", usedPercent: 95),
             ])
 
-        let alerts = UsageAlertEvaluator.candidates(in: [snapshot])
+        let alerts = UsageAlertEvaluator.candidates(
+            in: [snapshot],
+            warningThreshold: 30,
+            criticalThreshold: 10,
+            enabledProviderIDs: [.codex])
 
         #expect(alerts.map(\.threshold) == [30, 10])
         #expect(alerts.map(\.windowID) == ["weekly", "critical"])

@@ -9,6 +9,9 @@ final class UsageStore: ObservableObject {
     @Published private(set) var enabledProviderIDs: Set<ProviderID>
     @Published private(set) var notificationsEnabled: Bool
     @Published private(set) var notificationSettingsMessage: String?
+    @Published private(set) var warningThreshold: Int
+    @Published private(set) var criticalThreshold: Int
+    @Published private(set) var notificationProviderIDs: Set<ProviderID>
     @Published private(set) var showsRemainingInMenuBar: Bool
     @Published private(set) var launchAtLoginEnabled: Bool
     @Published private(set) var launchAtLoginMessage: String?
@@ -19,6 +22,9 @@ final class UsageStore: ObservableObject {
     private let launchAtLoginController: LaunchAtLoginController
     private static let enabledProvidersKey = "enabledProviderIDs"
     private static let showsRemainingInMenuBarKey = "showsRemainingInMenuBar"
+    private static let warningThresholdKey = "usageNotificationWarningThreshold"
+    private static let criticalThresholdKey = "usageNotificationCriticalThreshold"
+    private static let notificationProviderIDsKey = "usageNotificationProviderIDs"
 
     init(providers: [any UsageProviding] = ProviderRegistry.defaultProviders()) {
         self.providers = providers
@@ -28,6 +34,8 @@ final class UsageStore: ObservableObject {
         self.launchAtLoginController = launchAtLoginController
         self.notificationsEnabled = notificationController.isEnabled
         self.notificationSettingsMessage = nil
+        self.warningThreshold = UserDefaults.standard.object(forKey: Self.warningThresholdKey) as? Int ?? 30
+        self.criticalThreshold = UserDefaults.standard.object(forKey: Self.criticalThresholdKey) as? Int ?? 10
         self.showsRemainingInMenuBar = UserDefaults.standard.object(
             forKey: Self.showsRemainingInMenuBarKey) as? Bool ?? true
         self.launchAtLoginEnabled = launchAtLoginController.isEnabled
@@ -40,6 +48,11 @@ final class UsageStore: ObservableObject {
             enabledIDs = knownIDs
         }
         self.enabledProviderIDs = enabledIDs
+        if let stored = UserDefaults.standard.stringArray(forKey: Self.notificationProviderIDsKey) {
+            self.notificationProviderIDs = Set(stored.map { ProviderID(rawValue: $0) }).intersection(knownIDs)
+        } else {
+            self.notificationProviderIDs = knownIDs
+        }
         self.snapshots = providers
             .filter { enabledIDs.contains($0.descriptor.id) }
             .map { .loading($0.descriptor) }
@@ -77,7 +90,11 @@ final class UsageStore: ObservableObject {
 
         let order = Dictionary(uniqueKeysWithValues: activeProviders.enumerated().map { ($1.descriptor.id, $0) })
         self.snapshots = results.sorted { order[$0.id, default: .max] < order[$1.id, default: .max] }
-        self.notificationController.process(self.snapshots)
+        self.notificationController.process(
+            self.snapshots,
+            warningThreshold: self.warningThreshold,
+            criticalThreshold: self.criticalThreshold,
+            enabledProviderIDs: self.notificationProviderIDs)
         self.lastRefresh = .now
         self.isRefreshing = false
     }
@@ -111,6 +128,35 @@ final class UsageStore: ObservableObject {
                 ? AppLocalization.string("settings.notifications.denied")
                 : nil
         }
+    }
+
+    func setWarningThreshold(_ threshold: Int) {
+        self.warningThreshold = threshold
+        UserDefaults.standard.set(threshold, forKey: Self.warningThresholdKey)
+    }
+
+    func setCriticalThreshold(_ threshold: Int) {
+        self.criticalThreshold = threshold
+        UserDefaults.standard.set(threshold, forKey: Self.criticalThresholdKey)
+    }
+
+    func isNotificationEnabled(for id: ProviderID) -> Bool {
+        self.notificationProviderIDs.contains(id)
+    }
+
+    func setNotificationEnabled(_ enabled: Bool, for id: ProviderID) {
+        if enabled {
+            self.notificationProviderIDs.insert(id)
+        } else {
+            self.notificationProviderIDs.remove(id)
+        }
+        UserDefaults.standard.set(
+            self.notificationProviderIDs.map(\.rawValue).sorted(),
+            forKey: Self.notificationProviderIDsKey)
+    }
+
+    func sendTestNotification() {
+        self.notificationController.sendTest()
     }
 
     func setShowsRemainingInMenuBar(_ enabled: Bool) {
