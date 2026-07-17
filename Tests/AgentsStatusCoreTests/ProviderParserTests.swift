@@ -72,9 +72,15 @@ struct ProviderParserTests {
 
     @Test
     func providerIDsAreOpenForExtension() {
-        let custom = ProviderID(rawValue: "gemini")
-        #expect(custom.rawValue == "gemini")
+        let custom = ProviderID(rawValue: "another-agent")
+        #expect(custom.rawValue == "another-agent")
         #expect(custom != .codex)
+    }
+
+    @Test
+    func defaultRegistryIncludesSupportedProviders() {
+        let ids = ProviderRegistry.defaultProviders().map(\.descriptor.id)
+        #expect(ids == [.codex, .claude, .grok, .gemini, .openCode])
     }
 
     @Test

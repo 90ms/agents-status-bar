@@ -1,0 +1,11 @@
+[
+  {
+    "session_count": 3,
+    "cost_usd": 0.0425,
+    "input_tokens": 1200,
+    "output_tokens": 300,
+    "reasoning_tokens": 50,
+    "cache_read_tokens": 800,
+    "cache_write_tokens": 100
+  }
+]

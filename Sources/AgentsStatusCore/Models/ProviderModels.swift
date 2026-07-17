@@ -17,6 +17,8 @@ public struct ProviderID: RawRepresentable, Codable, Hashable, Sendable, Identif
     public static let codex: Self = "codex"
     public static let claude: Self = "claude"
     public static let grok: Self = "grok"
+    public static let gemini: Self = "gemini"
+    public static let openCode: Self = "opencode"
 }
 
 public struct ProviderCapabilities: Hashable, Sendable {

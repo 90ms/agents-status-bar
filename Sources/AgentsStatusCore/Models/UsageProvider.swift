@@ -13,6 +13,8 @@ public enum ProviderRegistry {
             CodexUsageProvider(homeDirectory: homeDirectory),
             ClaudeUsageProvider(homeDirectory: homeDirectory),
             GrokUsageProvider(homeDirectory: homeDirectory),
+            GeminiUsageProvider(homeDirectory: homeDirectory),
+            OpenCodeUsageProvider(homeDirectory: homeDirectory),
         ]
     }
 }

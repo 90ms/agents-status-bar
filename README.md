@@ -5,7 +5,7 @@
 A privacy-conscious macOS menu-bar app that shows how much usage remains across AI coding agents.
 
 <p align="center">
-  <img src="docs/agents-status-bar.png" width="400" alt="Agents Status Bar menu showing Codex, Claude Code, and Grok usage" />
+  <img src="docs/agents-status-bar.png" width="400" alt="Agents Status Bar menu showing coding-agent usage" />
 </p>
 
 > The screenshot uses sample values and contains no account data.
@@ -24,7 +24,7 @@ Agents Status Bar keeps the limits you care about in one small menu:
 - a customizable menu-bar label: icon only, lowest remaining, monthly estimated cost, or one provider's remaining usage;
 - an optional compact popover that keeps quota essentials visible while hiding secondary detail rows;
 - a six-hour GitHub Releases update check with a validated cache and stable-release link;
-- Codex account, Claude Code, and Grok support;
+- Codex, Claude Code, Grok, Gemini CLI, and OpenCode support;
 - one-minute refresh with a manual refresh button;
 - optional launch at login;
 - per-provider enable/disable settings;
@@ -42,6 +42,8 @@ All quota percentages are displayed as **remaining** values (`% left`). Account 
 | Codex | Weekly and model-specific limits | Latest session tokens | Existing Codex sign-in plus `~/.codex/sessions` |
 | Claude Code | 5-hour, weekly, and model-scoped limits | Today's deduplicated tokens | Existing Claude Code Keychain sign-in plus `~/.claude/projects` |
 | Grok | Not available yet | Current context usage | `~/.grok/sessions` |
+| Gemini CLI | Not locally available | Latest session tokens | `~/.gemini/tmp/*/chats` |
+| OpenCode | Not locally available | All-time aggregate tokens and recorded cost | Aggregate columns in `~/.local/share/opencode/opencode*.db` |
 
 Provider CLI formats and usage endpoints are not public compatibility contracts and may change. When an account request fails, the app falls back to known local data instead of inventing a value.
 
@@ -52,6 +54,8 @@ Cost is an estimate of what the locally observed tokens would cost at published 
 - Codex estimates cover the latest local session when its model can be identified.
 - Claude estimates cover today's deduplicated local messages and account for input, 5-minute and 1-hour cache writes, cache reads, and output.
 - Grok cost is not estimated yet because the local signal does not provide a billable input/output breakdown.
+- Gemini CLI cost is not estimated yet; only its latest locally recorded token metadata is used.
+- OpenCode displays the cost already aggregated in its local session database instead of repricing provider-specific models.
 - Unknown models are left without a cost instead of being mapped to a guessed price.
 
 Monthly totals are reconstructed from positive changes in the cumulative cost samples and scope resets. They include only usage observed while the app is running and recording history, so they remain estimates rather than billing records.
@@ -107,6 +111,8 @@ Sign in with the command-line agents you want to monitor:
 codex
 claude
 grok
+gemini
+opencode
 ```
 
 Only installed and signed-in providers can report usage. You can disable providers you do not use from Settings.
@@ -117,7 +123,9 @@ Only installed and signed-in providers can report usage. You can disable provide
 ProviderRegistry
     ├── CodexUsageProvider  ── account usage + ~/.codex/sessions
     ├── ClaudeUsageProvider ── account usage + ~/.claude/projects
-    └── GrokUsageProvider   ── ~/.grok/sessions
+    ├── GrokUsageProvider   ── ~/.grok/sessions
+    ├── GeminiUsageProvider ── ~/.gemini/tmp/*/chats
+    └── OpenCodeUsageProvider ── aggregate SQLite columns
                │
                ▼
         ProviderSnapshot
@@ -146,7 +154,7 @@ The project includes fixture-based parser tests and a macOS GitHub Actions build
 - No prompts or model responses are read for display or retained by the app.
 - Authentication values are never logged or copied into app storage.
 - Codex and Claude usage requests reuse their CLIs' existing sign-in sessions.
-- Local parsing is restricted to known usage fields in agent session directories.
+- Local parsing is restricted to known usage fields in agent session directories and OpenCode aggregate database columns.
 - Usage history stores only aggregate percentages and token totals for 30 days in Application Support.
 - The cached exchange-rate record contains only the public rate, publication date, and check time.
 - The cached price catalog contains only public model identifiers, prices, effective dates, and official source links.

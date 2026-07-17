@@ -1,0 +1,35 @@
+{
+  "sessionId": "00000000-0000-0000-0000-000000000000",
+  "startTime": "2026-07-17T00:00:00.000Z",
+  "lastUpdated": "2026-07-17T00:02:00.000Z",
+  "messages": [
+    {
+      "id": "response-1",
+      "timestamp": "2026-07-17T00:01:00.000Z",
+      "type": "gemini",
+      "model": "gemini-test-model",
+      "tokens": {
+        "input": 900,
+        "output": 100,
+        "cached": 200,
+        "thoughts": 50,
+        "tool": 0,
+        "total": 1050
+      }
+    },
+    {
+      "id": "response-2",
+      "timestamp": "2026-07-17T00:02:00.000Z",
+      "type": "gemini",
+      "model": "gemini-test-model",
+      "tokens": {
+        "input": 1500,
+        "output": 150,
+        "cached": 400,
+        "thoughts": 90,
+        "tool": 20,
+        "total": 1760
+      }
+    }
+  ]
+}
