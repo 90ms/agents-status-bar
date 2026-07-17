@@ -1,6 +1,6 @@
 cask "agents-status-bar" do
-  version "0.3.1"
-  sha256 "8ddfc124ebdffb8282589772dca67474cdc7cf24edbb7812dda6bf484fb0f73b"
+  version "0.4.0"
+  sha256 "1dec6f5381a43620260d1bcac4e0a27deee4eb2f44c36c41b3324439f0e91fcb"
 
   url "https://github.com/90ms/agents-status-bar/releases/download/v#{version}/AgentsStatusBar-#{version}.zip"
   name "Agents Status Bar"
