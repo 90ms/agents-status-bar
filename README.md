@@ -22,7 +22,7 @@ Agents Status Bar keeps the limits you care about in one small menu:
 - visible data source and last successful update time;
 - configurable warning and critical alerts per provider;
 - a customizable menu-bar label: icon only, lowest remaining, monthly estimated cost, or one provider's remaining usage;
-- a pulsing menu-bar icon and per-provider activity indicator while local session files are being updated;
+- a rotating menu-bar activity icon and per-provider indicator while local session files are being updated;
 - an optional compact popover that keeps quota essentials visible while hiding secondary detail rows;
 - a six-hour GitHub Releases update check with a validated cache and stable-release link;
 - Codex, Claude Code, Grok, Gemini CLI, and OpenCode support;
@@ -48,7 +48,9 @@ All quota percentages are displayed as **remaining** values (`% left`). Account 
 
 Provider CLI formats and usage endpoints are not public compatibility contracts and may change. When an account request fails, the app falls back to known local data instead of inventing a value.
 
-Active-session detection checks only the modification times of known usage files every three seconds. A session remains active for a configurable 10, 15, or 30 seconds after the latest write. This is a local activity heuristic rather than a guarantee that a provider is generating a response. The animation can be disabled, and macOS Reduce Motion keeps the activity indicator static.
+Active-session detection checks only the modification times of known usage files every three seconds. A session remains active for a configurable 10, 15, or 30 seconds after the latest write. While active, the icon inside the macOS menu-bar label rotates without changing the label width. This is a local activity heuristic rather than a guarantee that a provider is generating a response. The animation can be disabled, and macOS Reduce Motion keeps the activity indicator static.
+
+Codex account responses are cached for up to one minute during automatic refreshes. A quota reset immediately invalidates an older cached response, and the manual refresh button bypasses the provider cache so a newly reset allowance appears without the previous five-minute delay.
 
 ## Cost estimates and exchange rates
 

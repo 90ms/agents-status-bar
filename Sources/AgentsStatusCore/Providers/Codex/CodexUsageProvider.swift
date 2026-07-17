@@ -1,6 +1,6 @@
 import Foundation
 
-public struct CodexUsageProvider: UsageProviding, UsageActivityProviding {
+public struct CodexUsageProvider: UsageProviding, UsageActivityProviding, UsageCacheInvalidating {
     public let descriptor = ProviderDescriptor(
         id: .codex,
         displayName: "Codex",
@@ -48,6 +48,10 @@ public struct CodexUsageProvider: UsageProviding, UsageActivityProviding {
         } catch {
             return self.localFallback(localUsage: localUsage, accountError: error)
         }
+    }
+
+    public func invalidateUsageCache() async {
+        await self.accountClient.invalidateCache()
     }
 
     public func latestActivityDate(since cutoff: Date) -> Date? {

@@ -53,6 +53,33 @@ struct ProviderParserTests {
     }
 
     @Test
+    func codexUsageCacheExpiresAtQuotaResetAndSupportsManualInvalidation() async {
+        let cache = CodexAccountUsageCache()
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let futureResponse = CodexAccountUsageResponse(
+            planType: "prolite",
+            rateLimit: .init(
+                primaryWindow: .init(
+                    usedPercent: 25,
+                    resetAt: now.addingTimeInterval(30).timeIntervalSince1970,
+                    limitWindowSeconds: 604_800),
+                secondaryWindow: nil),
+            credits: nil,
+            additionalRateLimits: nil)
+
+        await cache.store(futureResponse, accountID: "account-1", fetchedAt: now)
+        #expect(await cache.value(accountID: "account-1", maxAge: 60, now: now) != nil)
+        #expect(await cache.value(
+            accountID: "account-1",
+            maxAge: 60,
+            now: now.addingTimeInterval(31)) == nil)
+
+        await cache.store(futureResponse, accountID: "account-1", fetchedAt: now)
+        await cache.invalidate()
+        #expect(await cache.value(accountID: "account-1", maxAge: 60, now: now) == nil)
+    }
+
+    @Test
     func claudeDeduplicatesStreamingUsageRecords() throws {
         let file = try #require(Bundle.module.url(
             forResource: "claude-usage",

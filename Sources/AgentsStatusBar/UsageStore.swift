@@ -175,10 +175,18 @@ final class UsageStore: ObservableObject {
         self.startActivityLoopIfNeeded()
     }
 
-    func refresh() async {
+    func refresh(forceProviderReload: Bool = false) async {
         guard !self.isRefreshing else { return }
         self.isRefreshing = true
         let activeProviders = self.providers.filter { self.enabledProviderIDs.contains($0.descriptor.id) }
+
+        if forceProviderReload {
+            for provider in activeProviders {
+                if let cachedProvider = provider as? any UsageCacheInvalidating {
+                    await cachedProvider.invalidateUsageCache()
+                }
+            }
+        }
 
         let results = await withTaskGroup(of: ProviderSnapshot.self, returning: [ProviderSnapshot].self) { group in
             for provider in activeProviders {

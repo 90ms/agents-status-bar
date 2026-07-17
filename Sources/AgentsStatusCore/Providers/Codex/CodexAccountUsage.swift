@@ -229,11 +229,16 @@ actor CodexAccountUsageCache {
     private var accountID: String?
     private var fetchedAt: Date?
 
-    func value(accountID: String?, maxAge: TimeInterval) -> CodexAccountUsageResult? {
+    func value(
+        accountID: String?,
+        maxAge: TimeInterval,
+        now: Date = .now) -> CodexAccountUsageResult?
+    {
         guard self.accountID == accountID,
               let response,
               let fetchedAt,
-              Date().timeIntervalSince(fetchedAt) < maxAge
+              now.timeIntervalSince(fetchedAt) < maxAge,
+              !response.hasElapsedReset(at: now)
         else { return nil }
         return CodexAccountUsageResult(response: response, fetchedAt: fetchedAt)
     }
@@ -242,6 +247,12 @@ actor CodexAccountUsageCache {
         self.response = response
         self.accountID = accountID
         self.fetchedAt = fetchedAt
+    }
+
+    func invalidate() {
+        self.response = nil
+        self.accountID = nil
+        self.fetchedAt = nil
     }
 }
 
@@ -255,7 +266,7 @@ struct CodexAccountUsageClient: Sendable {
     }
 
     func fetch(credentials: CodexAccountCredentials) async throws -> CodexAccountUsageResult {
-        if let cached = await cache.value(accountID: credentials.accountID, maxAge: 5 * 60) {
+        if let cached = await cache.value(accountID: credentials.accountID, maxAge: 60) {
             return cached
         }
         guard let url = URL(string: "https://chatgpt.com/backend-api/wham/usage") else {
@@ -290,5 +301,24 @@ struct CodexAccountUsageClient: Sendable {
         default:
             throw CodexAccountUsageError.server(http.statusCode)
         }
+    }
+
+    func invalidateCache() async {
+        await self.cache.invalidate()
+    }
+}
+
+private extension CodexAccountUsageResponse {
+    func hasElapsedReset(at date: Date) -> Bool {
+        let standardWindows = [
+            self.rateLimit?.primaryWindow,
+            self.rateLimit?.secondaryWindow,
+        ]
+        let additionalWindows = (self.additionalRateLimits ?? []).flatMap {
+            [$0.rateLimit?.primaryWindow, $0.rateLimit?.secondaryWindow]
+        }
+        return (standardWindows + additionalWindows)
+            .compactMap { $0?.resetAt }
+            .contains { Date(timeIntervalSince1970: $0) <= date }
     }
 }

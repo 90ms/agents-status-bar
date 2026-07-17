@@ -5,6 +5,10 @@ public protocol UsageProviding: Sendable {
     func fetchUsage() async -> ProviderSnapshot
 }
 
+public protocol UsageCacheInvalidating: Sendable {
+    func invalidateUsageCache() async
+}
+
 public protocol UsageActivityProviding: Sendable {
     var descriptor: ProviderDescriptor { get }
     func latestActivityDate(since cutoff: Date) -> Date?
