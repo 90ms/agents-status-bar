@@ -76,6 +76,8 @@ opencode
 
 Only installed and signed-in providers can report data. Providers you do not use can be disabled in **Settings → General**.
 
+Claude Code may keep its OAuth credentials in macOS Keychain. Use **Settings → General → Provider Connections → Claude Code → Connect** to approve access explicitly. Background refreshes suppress Keychain authentication UI, so locking and unlocking the Mac does not produce recurring approval dialogs. After approval, the credential remains only in app memory until it expires or the app exits.
+
 ## Provider support
 
 | Provider | Account quota | Local usage and cost source |
@@ -86,7 +88,7 @@ Only installed and signed-in providers can report data. Providers you do not use
 | Gemini CLI | Account quota unavailable | Latest session tokens from `~/.gemini/tmp/*/chats`; no cost estimate yet |
 | OpenCode | Account quota unavailable | Aggregate tokens and recorded cost from `~/.local/share/opencode/opencode*.db` |
 
-Codex and Claude reuse their existing CLI sign-ins for account usage endpoints. If an account request fails, the app shows a stale/unavailable state or falls back to verified local data instead of inventing a quota.
+Codex and Claude reuse their existing CLI sign-ins for account usage endpoints. Claude Keychain access is user-initiated from Settings and cached only in memory. If an account request fails, the app shows a stale/unavailable state or falls back to verified local data instead of inventing a quota.
 
 Provider CLI formats and usage endpoints are not public compatibility contracts and may change.
 
@@ -94,6 +96,7 @@ Provider CLI formats and usage endpoints are not public compatibility contracts 
 
 - Quotas and usage refresh automatically once per minute.
 - The refresh button bypasses provider caches where supported.
+- Background refreshes never present a Keychain approval dialog.
 - Codex account responses are cached for at most one minute and are invalidated as soon as a known reset time passes.
 - Activity detection checks only known session-file modification times every three seconds.
 - A session stays active for a configurable 10, 15, or 30 seconds after the latest write.
@@ -119,7 +122,7 @@ Unknown models are left without a cost instead of being mapped to a guessed pric
 
 | Tab | Options |
 | --- | --- |
-| General | UI language, enabled providers, menu-bar label, selected provider, compact mode, activity animation/window, launch at login, update check |
+| General | UI language, enabled providers, provider connections, menu-bar label, selected provider, compact mode, activity animation/window, launch at login, update check |
 | Alerts | Low-usage notifications, warning and critical thresholds, provider selection, test notification |
 | Usage | USD/KRW display, applied exchange rate, price-catalog update, monthly budget, usage-history window |
 | Privacy | Local-data explanation and copyable provider diagnostics |
@@ -134,6 +137,7 @@ The app checks GitHub Releases every six hours and displays a link when a newer 
 
 - No prompts or model responses are displayed or retained.
 - Authentication tokens, refresh tokens, and cookies are never logged or copied into app storage.
+- Claude credentials obtained after explicit approval are cached only in memory until expiry or app exit.
 - Local parsing is limited to known aggregate usage fields and OpenCode aggregate database columns.
 - Activity detection reads file metadata only, not prompt or response content.
 - History contains only aggregate percentages, token totals, and estimated cost and is retained for 30 days.

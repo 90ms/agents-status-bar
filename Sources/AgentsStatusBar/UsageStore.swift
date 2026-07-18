@@ -12,6 +12,8 @@ final class UsageStore: ObservableObject {
     @Published private(set) var warningThreshold: Int
     @Published private(set) var criticalThreshold: Int
     @Published private(set) var notificationProviderIDs: Set<ProviderID>
+    @Published private(set) var authorizingProviderIDs: Set<ProviderID>
+    @Published private(set) var providerAuthorizationMessages: [ProviderID: String]
     @Published private(set) var menuBarDisplayMode: MenuBarDisplayMode
     @Published private(set) var selectedMenuBarProviderID: ProviderID
     @Published private(set) var compactModeEnabled: Bool
@@ -78,6 +80,8 @@ final class UsageStore: ObservableObject {
         self.appUpdateClient = appUpdateClient
         self.notificationsEnabled = notificationController.isEnabled
         self.notificationSettingsMessage = nil
+        self.authorizingProviderIDs = []
+        self.providerAuthorizationMessages = [:]
         self.warningThreshold = UserDefaults.standard.object(forKey: Self.warningThresholdKey) as? Int ?? 30
         self.criticalThreshold = UserDefaults.standard.object(forKey: Self.criticalThresholdKey) as? Int ?? 10
         if let storedMode = UserDefaults.standard.string(forKey: Self.menuBarDisplayModeKey)
@@ -281,6 +285,31 @@ final class UsageStore: ObservableObject {
         self.notificationController.sendTest()
     }
 
+    func requestUsageAuthorization(for id: ProviderID) {
+        guard !self.authorizingProviderIDs.contains(id),
+              let provider = self.providers.first(where: { $0.descriptor.id == id })
+                as? any UsageAuthorizationProviding
+        else { return }
+
+        self.authorizingProviderIDs.insert(id)
+        self.providerAuthorizationMessages[id] = nil
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await provider.requestUsageAuthorization()
+                self.providerAuthorizationMessages[id] = AppLocalization.format(
+                    "settings.connections.connected",
+                    provider.descriptor.displayName)
+                await self.refresh(forceProviderReload: true)
+            } catch {
+                self.providerAuthorizationMessages[id] = AppLocalization.format(
+                    "settings.connections.failed",
+                    provider.descriptor.displayName)
+            }
+            self.authorizingProviderIDs.remove(id)
+        }
+    }
+
     func clearHistory() {
         Task {
             try? await self.historyStore.clear()
@@ -408,6 +437,13 @@ final class UsageStore: ObservableObject {
 
     var descriptors: [ProviderDescriptor] {
         self.providers.map(\.descriptor)
+    }
+
+    var authorizationDescriptors: [ProviderDescriptor] {
+        self.providers.compactMap { provider in
+            guard provider is any UsageAuthorizationProviding else { return nil }
+            return provider.descriptor
+        }
     }
 
     var hasActiveSession: Bool {

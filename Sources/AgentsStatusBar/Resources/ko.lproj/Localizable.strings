@@ -20,6 +20,11 @@
 "source.officialAPI" = "계정 API";
 "source.estimated" = "추정치";
 "settings.providers" = "제공자";
+"settings.connections" = "제공자 연결";
+"settings.connections.connect" = "연결";
+"settings.connections.connected" = "%@ 연결됨.";
+"settings.connections.failed" = "%@에 연결하지 못했습니다. 해당 CLI를 한 번 실행한 후 다시 시도하세요.";
+"settings.connections.description" = "연결을 선택할 때만 키체인 승인을 요청합니다. 백그라운드 갱신 중에는 승인 창을 열지 않습니다.";
 "settings.tab.general" = "일반";
 "settings.tab.notifications" = "알림";
 "settings.tab.usage" = "사용량";

@@ -20,6 +20,11 @@
 "source.officialAPI" = "Account API";
 "source.estimated" = "Estimated";
 "settings.providers" = "Providers";
+"settings.connections" = "Provider Connections";
+"settings.connections.connect" = "Connect";
+"settings.connections.connected" = "%@ connected.";
+"settings.connections.failed" = "Could not connect %@. Open its CLI once, then try again.";
+"settings.connections.description" = "Keychain approval is requested only when you choose Connect. Background refreshes never open an approval dialog.";
 "settings.tab.general" = "General";
 "settings.tab.notifications" = "Alerts";
 "settings.tab.usage" = "Usage";

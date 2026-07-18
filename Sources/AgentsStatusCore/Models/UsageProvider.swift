@@ -9,6 +9,10 @@ public protocol UsageCacheInvalidating: Sendable {
     func invalidateUsageCache() async
 }
 
+public protocol UsageAuthorizationProviding: UsageProviding {
+    func requestUsageAuthorization() async throws
+}
+
 public protocol UsageActivityProviding: Sendable {
     var descriptor: ProviderDescriptor { get }
     func latestActivityDate(since cutoff: Date) -> Date?

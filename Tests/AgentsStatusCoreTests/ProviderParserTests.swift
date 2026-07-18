@@ -1,5 +1,7 @@
 @testable import AgentsStatusCore
 import Foundation
+import LocalAuthentication
+import Security
 import Testing
 
 struct ProviderParserTests {
@@ -253,5 +255,37 @@ struct ProviderParserTests {
         #expect(credentials.subscriptionType == "max")
         #expect(credentials.rateLimitTier == "default_claude_max_5x")
         #expect(!credentials.isExpired)
+    }
+
+    @Test
+    func claudeBackgroundKeychainQuerySuppressesAuthenticationUI() {
+        let background = ClaudeOAuthCredentialLoader.keychainQuery(interactive: false)
+        let interactive = ClaudeOAuthCredentialLoader.keychainQuery(interactive: true)
+
+        let backgroundContext = background[kSecUseAuthenticationContext] as? LAContext
+        let interactiveContext = interactive[kSecUseAuthenticationContext] as? LAContext
+        #expect(backgroundContext?.interactionNotAllowed == true)
+        #expect(interactiveContext?.interactionNotAllowed == false)
+    }
+
+    @Test
+    func claudeCredentialCacheKeepsValidCredentialsAndDropsExpiredOnes() async {
+        let cache = ClaudeOAuthCredentialCache()
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let valid = ClaudeOAuthCredentials(
+            accessToken: "fake-valid-token",
+            expiresAt: now.addingTimeInterval(60),
+            rateLimitTier: nil,
+            subscriptionType: "max")
+        let expired = ClaudeOAuthCredentials(
+            accessToken: "fake-expired-token",
+            expiresAt: now.addingTimeInterval(-1),
+            rateLimitTier: nil,
+            subscriptionType: "max")
+
+        await cache.store(valid)
+        #expect(await cache.value(at: now)?.accessToken == "fake-valid-token")
+        await cache.store(expired)
+        #expect(await cache.value(at: now) == nil)
     }
 }

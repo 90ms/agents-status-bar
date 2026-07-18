@@ -1,4 +1,5 @@
 import Foundation
+import LocalAuthentication
 import Security
 
 struct ClaudeOAuthCredentials: Sendable {
@@ -8,8 +9,12 @@ struct ClaudeOAuthCredentials: Sendable {
     let subscriptionType: String?
 
     var isExpired: Bool {
+        self.isExpired(at: .now)
+    }
+
+    func isExpired(at date: Date) -> Bool {
         guard let expiresAt else { return false }
-        return Date() >= expiresAt
+        return date >= expiresAt
     }
 
     static func decode(_ data: Data) throws -> Self {
@@ -47,7 +52,7 @@ struct ClaudeOAuthCredentialLoader: Sendable {
         self.allowKeychain = allowKeychain
     }
 
-    func load() throws -> ClaudeOAuthCredentials {
+    func load(interactive: Bool = false) throws -> ClaudeOAuthCredentials {
         if let data = try? Data(contentsOf: self.credentialsFile),
            let credentials = try? ClaudeOAuthCredentials.decode(data)
         {
@@ -58,14 +63,12 @@ struct ClaudeOAuthCredentialLoader: Sendable {
             throw ClaudeOAuthUsageError.credentialsUnavailable(errSecItemNotFound)
         }
 
-        let query: [CFString: Any] = [
-            kSecClass: kSecClassGenericPassword,
-            kSecAttrService: "Claude Code-credentials",
-            kSecMatchLimit: kSecMatchLimitOne,
-            kSecReturnData: true,
-        ]
+        let query = Self.keychainQuery(interactive: interactive)
         var result: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
+        if status == errSecInteractionNotAllowed {
+            throw ClaudeOAuthUsageError.authorizationRequired
+        }
         guard status == errSecSuccess, let data = result as? Data else {
             throw ClaudeOAuthUsageError.credentialsUnavailable(status)
         }
@@ -73,9 +76,22 @@ struct ClaudeOAuthCredentialLoader: Sendable {
         guard !credentials.isExpired else { throw ClaudeOAuthUsageError.expiredCredentials }
         return credentials
     }
+
+    static func keychainQuery(interactive: Bool) -> [CFString: Any] {
+        let context = LAContext()
+        context.interactionNotAllowed = !interactive
+        return [
+            kSecClass: kSecClassGenericPassword,
+            kSecAttrService: "Claude Code-credentials",
+            kSecMatchLimit: kSecMatchLimitOne,
+            kSecReturnData: true,
+            kSecUseAuthenticationContext: context,
+        ]
+    }
 }
 
 enum ClaudeOAuthUsageError: LocalizedError, Sendable {
+    case authorizationRequired
     case credentialsUnavailable(OSStatus)
     case invalidCredentials
     case expiredCredentials
@@ -86,8 +102,10 @@ enum ClaudeOAuthUsageError: LocalizedError, Sendable {
 
     var errorDescription: String? {
         switch self {
+        case .authorizationRequired:
+            "Claude Keychain access requires approval. Connect Claude in Settings."
         case .credentialsUnavailable:
-            "Claude OAuth credentials are unavailable. Allow Keychain access and refresh."
+            "Claude OAuth credentials are unavailable. Connect Claude in Settings."
         case .invalidCredentials:
             "Claude OAuth credentials have an unsupported format."
         case .expiredCredentials:
@@ -101,6 +119,26 @@ enum ClaudeOAuthUsageError: LocalizedError, Sendable {
         case .invalidResponse:
             "Claude usage response was invalid."
         }
+    }
+}
+
+actor ClaudeOAuthCredentialCache {
+    private var credentials: ClaudeOAuthCredentials?
+
+    func value(at date: Date = .now) -> ClaudeOAuthCredentials? {
+        guard let credentials, !credentials.isExpired(at: date) else {
+            self.credentials = nil
+            return nil
+        }
+        return credentials
+    }
+
+    func store(_ credentials: ClaudeOAuthCredentials) {
+        self.credentials = credentials
+    }
+
+    func invalidate() {
+        self.credentials = nil
     }
 }
 
@@ -249,6 +287,11 @@ actor ClaudeOAuthUsageCache {
         self.response = response
         self.fetchedAt = fetchedAt
     }
+
+    func invalidate() {
+        self.response = nil
+        self.fetchedAt = nil
+    }
 }
 
 struct ClaudeOAuthUsageClient: Sendable {
@@ -292,5 +335,9 @@ struct ClaudeOAuthUsageClient: Sendable {
         default:
             throw ClaudeOAuthUsageError.server(http.statusCode)
         }
+    }
+
+    func invalidateCache() async {
+        await self.cache.invalidate()
     }
 }

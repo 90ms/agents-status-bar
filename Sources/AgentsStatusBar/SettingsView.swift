@@ -68,6 +68,35 @@ struct SettingsView: View {
                 }
             }
 
+            if !self.store.authorizationDescriptors.isEmpty {
+                Section(AppLocalization.string("settings.connections")) {
+                    ForEach(self.store.authorizationDescriptors) { descriptor in
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Label(descriptor.displayName, systemImage: descriptor.systemImage)
+                                Spacer()
+                                if self.store.authorizingProviderIDs.contains(descriptor.id) {
+                                    ProgressView()
+                                        .controlSize(.small)
+                                } else {
+                                    Button(AppLocalization.string("settings.connections.connect")) {
+                                        self.store.requestUsageAuthorization(for: descriptor.id)
+                                    }
+                                }
+                            }
+                            if let message = self.store.providerAuthorizationMessages[descriptor.id] {
+                                Text(message)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    Text(AppLocalization.string("settings.connections.description"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             Section(AppLocalization.string("settings.menuBar")) {
                 Picker(
                     AppLocalization.string("settings.menuBar.display"),
