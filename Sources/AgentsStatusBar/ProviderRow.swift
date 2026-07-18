@@ -48,6 +48,38 @@ struct ProviderRow: View {
                 }
             }
 
+            if let resetCredits = self.snapshot.quotaResetCredits {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Label(
+                            AppLocalization.string("usage.resetCredits"),
+                            systemImage: "ticket.fill")
+                        Spacer()
+                        Text(AppLocalization.format(
+                            "usage.resetCredits.available",
+                            resetCredits.availableCount))
+                            .monospacedDigit()
+                    }
+                    .font(.caption)
+
+                    if !self.compact {
+                        ForEach(resetCredits.credits) { credit in
+                            HStack {
+                                Text(credit.title)
+                                Spacer()
+                                if let expiresAt = credit.expiresAt {
+                                    Text(AppLocalization.string("usage.resetCredits.expires"))
+                                    Text(expiresAt, format: .dateTime
+                                        .year().month().day().hour().minute())
+                                }
+                            }
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+
             if !self.compact, let tokenUsage = snapshot.tokenUsage {
                 HStack {
                     Text(tokenUsage.label)

@@ -55,6 +55,8 @@ public enum ProviderDiagnosticReportBuilder {
             lines.append("updated_at=\(self.timestamp(snapshot.updatedAt))")
             lines.append("freshness_seconds=\(max(0, Int(generatedAt.timeIntervalSince(snapshot.updatedAt))))")
             lines.append("quota_window_count=\(snapshot.quotaWindows.count)")
+            lines.append("reset_credit_available_count=\(snapshot.quotaResetCredits?.availableCount ?? 0)")
+            lines.append("reset_credit_returned_count=\(snapshot.quotaResetCredits?.credits.count ?? 0)")
 
             for (index, window) in snapshot.quotaWindows.enumerated() {
                 let prefix = "quota_\(index)"

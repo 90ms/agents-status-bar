@@ -14,7 +14,7 @@ A privacy-conscious macOS menu-bar app for checking AI coding-agent quotas, loca
 
 | Area | What you can do |
 | --- | --- |
-| Quotas | See remaining percentage, reset time, provider status, and model-specific limits |
+| Quotas | See remaining percentage, reset time, provider status, model-specific limits, and Codex limit-reset credits |
 | Tokens and cost | View locally observed tokens and their estimated API-price equivalent in USD or KRW |
 | Menu bar | Show an icon, the lowest remaining quota, monthly estimated cost, or one selected provider |
 | Active sessions | See a fixed-width waveform pulse in the menu bar while a known local session file is being updated |
@@ -82,7 +82,7 @@ Claude Code may keep its OAuth credentials in macOS Keychain. Use **Settings →
 
 | Provider | Account quota | Local usage and cost source |
 | --- | --- | --- |
-| Codex | Weekly and model-specific limits | Latest session tokens from `~/.codex/sessions`; estimated with the detected model |
+| Codex | Weekly and model-specific limits plus available limit-reset credits and expiration | Latest session tokens from `~/.codex/sessions`; estimated with the detected model |
 | Claude Code | 5-hour, weekly, and model-scoped limits | Today's deduplicated tokens from `~/.claude/projects`; cache-aware cost estimate |
 | Grok | Account quota unavailable | Current context usage from `~/.grok/sessions`; no cost estimate yet |
 | Gemini CLI | Account quota unavailable | Latest session tokens from `~/.gemini/tmp/*/chats`; no cost estimate yet |
@@ -98,6 +98,7 @@ Provider CLI formats and usage endpoints are not public compatibility contracts 
 - The refresh button bypasses provider caches where supported.
 - Background refreshes never present a Keychain approval dialog.
 - Codex account responses are cached for at most one minute and are invalidated as soon as a known reset time passes.
+- Codex limit-reset credits are refreshed independently, cached for up to five minutes, and show the available count, title, and expiration returned by the account endpoint.
 - Activity detection checks only known session-file modification times every three seconds.
 - A session stays active for a configurable 10, 15, or 30 seconds after the latest write.
 - The menu-bar waveform pulses once after each activity check; macOS Reduce Motion keeps it static.
@@ -142,6 +143,7 @@ The app checks GitHub Releases every six hours and displays a link when a newer 
 - Activity detection reads file metadata only, not prompt or response content.
 - History contains only aggregate percentages, token totals, and estimated cost and is retained for 30 days.
 - Exchange-rate and pricing caches contain only public data and validation metadata.
+- Limit-reset credit history is not stored; the UI shows only the current account response.
 - Diagnostics exclude prompts, responses, credentials, cookies, provider detail text, and file paths.
 - The app has no analytics or telemetry.
 

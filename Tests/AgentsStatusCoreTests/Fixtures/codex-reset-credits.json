@@ -1,0 +1,16 @@
+{
+  "available_count": 2,
+  "total_earned_count": 3,
+  "credits": [
+    {
+      "status": "available",
+      "title": "Full reset",
+      "expires_at": "2026-08-12T18:07:20Z"
+    },
+    {
+      "status": "available",
+      "title": "Weekly reset",
+      "expires_at": 1787500000000
+    }
+  ]
+}

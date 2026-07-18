@@ -181,6 +181,32 @@ public struct CreditBalance: Codable, Hashable, Sendable {
     }
 }
 
+public struct QuotaResetCredit: Identifiable, Codable, Hashable, Sendable {
+    public let id: String
+    public let status: String
+    public let title: String
+    public let expiresAt: Date?
+
+    public init(id: String, status: String, title: String, expiresAt: Date?) {
+        self.id = id
+        self.status = status
+        self.title = title
+        self.expiresAt = expiresAt
+    }
+}
+
+public struct QuotaResetCreditSummary: Codable, Hashable, Sendable {
+    public let availableCount: Int
+    public let totalEarnedCount: Int
+    public let credits: [QuotaResetCredit]
+
+    public init(availableCount: Int, totalEarnedCount: Int, credits: [QuotaResetCredit]) {
+        self.availableCount = max(availableCount, 0)
+        self.totalEarnedCount = max(totalEarnedCount, 0)
+        self.credits = credits
+    }
+}
+
 public struct ProviderSnapshot: Identifiable, Hashable, Sendable {
     public let descriptor: ProviderDescriptor
     public let availability: ProviderAvailability
@@ -189,6 +215,7 @@ public struct ProviderSnapshot: Identifiable, Hashable, Sendable {
     public let tokenUsage: TokenUsage?
     public let costEstimate: TokenCostEstimate?
     public let credits: CreditBalance?
+    public let quotaResetCredits: QuotaResetCreditSummary?
     public let detail: String?
     public let updatedAt: Date
 
@@ -202,6 +229,7 @@ public struct ProviderSnapshot: Identifiable, Hashable, Sendable {
         tokenUsage: TokenUsage? = nil,
         costEstimate: TokenCostEstimate? = nil,
         credits: CreditBalance? = nil,
+        quotaResetCredits: QuotaResetCreditSummary? = nil,
         detail: String? = nil,
         updatedAt: Date = .now)
     {
@@ -212,6 +240,7 @@ public struct ProviderSnapshot: Identifiable, Hashable, Sendable {
         self.tokenUsage = tokenUsage
         self.costEstimate = costEstimate
         self.credits = credits
+        self.quotaResetCredits = quotaResetCredits
         self.detail = detail
         self.updatedAt = updatedAt
     }

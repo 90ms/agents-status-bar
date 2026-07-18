@@ -38,6 +38,14 @@ struct ProviderDiagnosticReportTests {
                 amountUSD: 99,
                 modelIDs: ["safe-model-1"]),
             credits: CreditBalance(balance: secret, hasCredits: true, unlimited: false),
+            quotaResetCredits: QuotaResetCreditSummary(
+                availableCount: 1,
+                totalEarnedCount: 2,
+                credits: [QuotaResetCredit(
+                    id: secret,
+                    status: "available",
+                    title: prompt,
+                    expiresAt: Date(timeIntervalSince1970: 1_800_000_000))]),
             detail: "Authorization: Bearer \(secret); cookie=value; \(prompt); \(response); \(homePath)",
             updatedAt: Date(timeIntervalSince1970: 1_700_000_000))
 
@@ -52,6 +60,8 @@ struct ProviderDiagnosticReportTests {
         #expect(report.contains("id=custom_provider"))
         #expect(report.contains("availability=failed"))
         #expect(report.contains("quota_0_used_percent=42"))
+        #expect(report.contains("reset_credit_available_count=1"))
+        #expect(report.contains("reset_credit_returned_count=1"))
         #expect(report.contains("token_model=safe-model-1"))
         #expect(report.contains("token_total=12"))
         #expect(report.contains("cost_models=safe-model-1"))

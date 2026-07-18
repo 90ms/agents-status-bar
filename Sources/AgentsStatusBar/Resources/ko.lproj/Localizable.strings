@@ -14,6 +14,9 @@
 "usage.percentLeft" = "% 남음";
 "usage.tokens" = "토큰";
 "usage.apiCostEstimate" = "API 비용 추정";
+"usage.resetCredits" = "한도 초기화 충전권";
+"usage.resetCredits.available" = "%d개 보유";
+"usage.resetCredits.expires" = "만료";
 "usage.updated" = "업데이트";
 "source.localSessionLog" = "로컬 세션";
 "source.localProtocol" = "로컬 프로토콜";

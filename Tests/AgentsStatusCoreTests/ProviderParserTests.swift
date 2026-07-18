@@ -55,6 +55,24 @@ struct ProviderParserTests {
     }
 
     @Test
+    func codexResetCreditsMapCountTitlesAndExpiration() throws {
+        let file = try #require(Bundle.module.url(
+            forResource: "codex-reset-credits",
+            withExtension: "json",
+            subdirectory: "Fixtures"))
+        let response = try JSONDecoder().decode(
+            CodexResetCreditsResponse.self,
+            from: Data(contentsOf: file))
+        let summary = response.summary()
+
+        #expect(summary.availableCount == 2)
+        #expect(summary.totalEarnedCount == 3)
+        #expect(summary.credits.map(\.title) == ["Full reset", "Weekly reset"])
+        #expect(summary.credits.allSatisfy { $0.status == "available" })
+        #expect(summary.credits.allSatisfy { $0.expiresAt != nil })
+    }
+
+    @Test
     func codexUsageCacheExpiresAtQuotaResetAndSupportsManualInvalidation() async {
         let cache = CodexAccountUsageCache()
         let now = Date(timeIntervalSince1970: 1_800_000_000)

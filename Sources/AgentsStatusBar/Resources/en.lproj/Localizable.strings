@@ -14,6 +14,9 @@
 "usage.percentLeft" = "% left";
 "usage.tokens" = "tokens";
 "usage.apiCostEstimate" = "API cost estimate";
+"usage.resetCredits" = "Limit reset credits";
+"usage.resetCredits.available" = "%d available";
+"usage.resetCredits.expires" = "Expires";
 "usage.updated" = "Updated";
 "source.localSessionLog" = "Local session";
 "source.localProtocol" = "Local protocol";

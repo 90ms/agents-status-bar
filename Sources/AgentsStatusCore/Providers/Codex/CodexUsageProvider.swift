@@ -14,11 +14,13 @@ public struct CodexUsageProvider: UsageProviding, UsageActivityProviding, UsageC
     private let sessionsDirectory: URL
     private let credentialLoader: CodexAccountCredentialLoader
     private let accountClient: CodexAccountUsageClient
+    private let resetCreditsClient: CodexResetCreditsClient
 
     public init(homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser) {
         self.sessionsDirectory = homeDirectory.appending(path: ".codex/sessions", directoryHint: .isDirectory)
         self.credentialLoader = CodexAccountCredentialLoader(homeDirectory: homeDirectory)
         self.accountClient = CodexAccountUsageClient()
+        self.resetCreditsClient = CodexResetCreditsClient()
     }
 
     public func fetchUsage() async -> ProviderSnapshot {
@@ -26,7 +28,10 @@ public struct CodexUsageProvider: UsageProviding, UsageActivityProviding, UsageC
 
         do {
             let credentials = try self.credentialLoader.load()
+            async let resetCreditsFetch = try? self.resetCreditsClient.fetch(credentials: credentials)
             let result = try await self.accountClient.fetch(credentials: credentials)
+            let resetCreditsResult = await resetCreditsFetch
+            let resetCredits = resetCreditsResult?.response.summary()
             let accountUsage = result.response
             let plan = accountUsage.planType?
                 .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -43,6 +48,7 @@ public struct CodexUsageProvider: UsageProviding, UsageActivityProviding, UsageC
                 tokenUsage: localUsage?.tokenUsage,
                 costEstimate: localUsage?.costEstimate,
                 credits: accountUsage.creditBalance,
+                quotaResetCredits: resetCredits,
                 detail: detail,
                 updatedAt: result.fetchedAt)
         } catch {
@@ -52,6 +58,7 @@ public struct CodexUsageProvider: UsageProviding, UsageActivityProviding, UsageC
 
     public func invalidateUsageCache() async {
         await self.accountClient.invalidateCache()
+        await self.resetCreditsClient.invalidateCache()
     }
 
     public func latestActivityDate(since cutoff: Date) -> Date? {
