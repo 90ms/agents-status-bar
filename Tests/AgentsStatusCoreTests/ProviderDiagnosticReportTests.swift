@@ -37,6 +37,11 @@ struct ProviderDiagnosticReportTests {
                 label: prompt,
                 amountUSD: 99,
                 modelIDs: ["safe-model-1"]),
+            accountTokenUsage: AccountTokenUsageSummary(
+                todayTokens: 1_000,
+                currentMonthTokens: 2_000,
+                lifetimeTokens: 3_000,
+                localDate: "2026-07-21"),
             credits: CreditBalance(balance: secret, hasCredits: true, unlimited: false),
             quotaResetCredits: QuotaResetCreditSummary(
                 availableCount: 1,
@@ -64,6 +69,9 @@ struct ProviderDiagnosticReportTests {
         #expect(report.contains("reset_credit_returned_count=1"))
         #expect(report.contains("token_model=safe-model-1"))
         #expect(report.contains("token_total=12"))
+        #expect(report.contains("account_token_today=1000"))
+        #expect(report.contains("account_token_current_month=2000"))
+        #expect(report.contains("account_token_lifetime=3000"))
         #expect(report.contains("cost_models=safe-model-1"))
         #expect(report.contains("freshness_seconds=60"))
         #expect(!report.contains(homePath))

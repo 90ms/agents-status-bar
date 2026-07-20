@@ -57,6 +57,18 @@ public enum ProviderDiagnosticReportBuilder {
             lines.append("quota_window_count=\(snapshot.quotaWindows.count)")
             lines.append("reset_credit_available_count=\(snapshot.quotaResetCredits?.availableCount ?? 0)")
             lines.append("reset_credit_returned_count=\(snapshot.quotaResetCredits?.credits.count ?? 0)")
+            self.append(
+                snapshot.accountTokenUsage?.todayTokens,
+                as: "account_token_today",
+                to: &lines)
+            self.append(
+                snapshot.accountTokenUsage?.currentMonthTokens,
+                as: "account_token_current_month",
+                to: &lines)
+            self.append(
+                snapshot.accountTokenUsage?.lifetimeTokens,
+                as: "account_token_lifetime",
+                to: &lines)
 
             for (index, window) in snapshot.quotaWindows.enumerated() {
                 let prefix = "quota_\(index)"

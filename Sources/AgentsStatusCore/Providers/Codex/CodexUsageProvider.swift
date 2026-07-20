@@ -14,24 +14,30 @@ public struct CodexUsageProvider: UsageProviding, UsageActivityProviding, UsageC
     private let sessionsDirectory: URL
     private let credentialLoader: CodexAccountCredentialLoader
     private let accountClient: CodexAccountUsageClient
+    private let accountTokenUsageClient: CodexAccountTokenUsageClient
     private let resetCreditsClient: CodexResetCreditsClient
 
     public init(homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser) {
         self.sessionsDirectory = homeDirectory.appending(path: ".codex/sessions", directoryHint: .isDirectory)
         self.credentialLoader = CodexAccountCredentialLoader(homeDirectory: homeDirectory)
         self.accountClient = CodexAccountUsageClient()
+        self.accountTokenUsageClient = CodexAccountTokenUsageClient()
         self.resetCreditsClient = CodexResetCreditsClient()
     }
 
     public func fetchUsage() async -> ProviderSnapshot {
         let localUsage = self.latestLocalUsage()
+        async let accountTokenUsageFetch = try? self.accountTokenUsageClient.fetch()
 
         do {
             let credentials = try self.credentialLoader.load()
             async let resetCreditsFetch = try? self.resetCreditsClient.fetch(credentials: credentials)
             let result = try await self.accountClient.fetch(credentials: credentials)
             let resetCreditsResult = await resetCreditsFetch
+            let accountTokenUsageResult = await accountTokenUsageFetch
             let resetCredits = resetCreditsResult?.response.summary()
+            let accountTokenUsage = self.accountTokenUsage(from: accountTokenUsageResult)
+            let referenceCost = self.referenceCost(for: accountTokenUsage)
             let accountUsage = result.response
             let plan = accountUsage.planType?
                 .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -45,19 +51,27 @@ public struct CodexUsageProvider: UsageProviding, UsageActivityProviding, UsageC
                 availability: .available,
                 source: .officialAPI,
                 quotaWindows: accountUsage.quotaWindows(),
-                tokenUsage: localUsage?.tokenUsage,
-                costEstimate: localUsage?.costEstimate,
+                tokenUsage: accountTokenUsage.map {
+                    TokenUsage(label: "This month · account", totalTokens: $0.currentMonthTokens)
+                },
+                costEstimate: referenceCost,
+                accountTokenUsage: accountTokenUsage,
                 credits: accountUsage.creditBalance,
                 quotaResetCredits: resetCredits,
                 detail: detail,
-                updatedAt: result.fetchedAt)
+                updatedAt: max(result.fetchedAt, accountTokenUsageResult?.fetchedAt ?? .distantPast))
         } catch {
-            return self.localFallback(localUsage: localUsage, accountError: error)
+            let accountTokenUsageResult = await accountTokenUsageFetch
+            return self.localFallback(
+                localUsage: localUsage,
+                accountTokenUsageResult: accountTokenUsageResult,
+                accountError: error)
         }
     }
 
     public func invalidateUsageCache() async {
         await self.accountClient.invalidateCache()
+        await self.accountTokenUsageClient.invalidateCache()
         await self.resetCreditsClient.invalidateCache()
     }
 
@@ -82,20 +96,31 @@ public struct CodexUsageProvider: UsageProviding, UsageActivityProviding, UsageC
         return nil
     }
 
-    private func localFallback(localUsage: CodexParsedUsage?, accountError: Error) -> ProviderSnapshot {
+    private func localFallback(
+        localUsage: CodexParsedUsage?,
+        accountTokenUsageResult: CodexAccountTokenUsageResult?,
+        accountError: Error) -> ProviderSnapshot
+    {
         let errorMessage = (accountError as? LocalizedError)?.errorDescription
-        if let localUsage {
+        let accountTokenUsage = self.accountTokenUsage(from: accountTokenUsageResult)
+        let referenceCost = self.referenceCost(for: accountTokenUsage)
+        if localUsage != nil || accountTokenUsage != nil {
             return .init(
                 descriptor: self.descriptor,
                 availability: .available,
-                source: .localSessionLog,
-                quotaWindows: localUsage.quotaWindows,
-                tokenUsage: localUsage.tokenUsage,
-                costEstimate: localUsage.costEstimate,
-                credits: localUsage.credits,
-                detail: errorMessage.map { "Local usage fallback · \($0)" }
-                    ?? "Latest local Codex session",
-                updatedAt: localUsage.timestamp ?? .now)
+                source: accountTokenUsage == nil ? .localSessionLog : .localProtocol,
+                quotaWindows: localUsage?.quotaWindows ?? [],
+                tokenUsage: accountTokenUsage.map {
+                    TokenUsage(label: "This month · account", totalTokens: $0.currentMonthTokens)
+                },
+                costEstimate: referenceCost,
+                accountTokenUsage: accountTokenUsage,
+                credits: localUsage?.credits,
+                detail: errorMessage.map { "Partial Codex data · \($0)" }
+                    ?? "Partial Codex data",
+                updatedAt: max(
+                    localUsage?.timestamp ?? .now,
+                    accountTokenUsageResult?.fetchedAt ?? .distantPast))
         }
         return .init(
             descriptor: self.descriptor,
@@ -103,13 +128,39 @@ public struct CodexUsageProvider: UsageProviding, UsageActivityProviding, UsageC
             source: .localSessionLog,
             detail: errorMessage ?? "No Codex usage event was found in ~/.codex/sessions")
     }
+
+    private func accountTokenUsage(
+        from result: CodexAccountTokenUsageResult?) -> AccountTokenUsageSummary?
+    {
+        guard let response = result?.response,
+              let lifetimeTokens = response.summary.lifetimeTokens,
+              let dailyBuckets = response.dailyUsageBuckets
+        else { return nil }
+        return AccountTokenUsageAggregator.summarize(
+            dailyBuckets: dailyBuckets.map {
+                AccountDailyTokenBucket(startDate: $0.startDate, tokenCount: $0.tokens)
+            },
+            lifetimeTokens: lifetimeTokens)
+    }
+
+    private func referenceCost(
+        for usage: AccountTokenUsageSummary?) -> TokenCostEstimate?
+    {
+        guard let usage,
+              let estimator = AccountTokenReferenceCostEstimator
+                .codexInputOutputReferenceV1()
+        else { return nil }
+        return TokenCostEstimate(
+            label: "This month · API-equivalent reference",
+            amountUSD: estimator.estimate(tokenCount: usage.currentMonthTokens).amountUSD,
+            modelIDs: [estimator.assumption.referenceModelID])
+    }
 }
 
 struct CodexParsedUsage {
     let timestamp: Date?
     let quotaWindows: [QuotaWindow]
     let tokenUsage: TokenUsage
-    let costEstimate: TokenCostEstimate?
     let credits: CreditBalance?
 }
 
@@ -151,7 +202,6 @@ enum CodexLogParser {
                 timestamp: TimestampParser.parse(event.timestamp),
                 quotaWindows: windows,
                 tokenUsage: tokenUsage,
-                costEstimate: TokenPricingCatalog.estimate(providerID: .codex, usage: tokenUsage),
                 credits: credits)
         }
         return nil

@@ -214,6 +214,7 @@ public struct ProviderSnapshot: Identifiable, Hashable, Sendable {
     public let quotaWindows: [QuotaWindow]
     public let tokenUsage: TokenUsage?
     public let costEstimate: TokenCostEstimate?
+    public let accountTokenUsage: AccountTokenUsageSummary?
     public let credits: CreditBalance?
     public let quotaResetCredits: QuotaResetCreditSummary?
     public let detail: String?
@@ -228,6 +229,7 @@ public struct ProviderSnapshot: Identifiable, Hashable, Sendable {
         quotaWindows: [QuotaWindow] = [],
         tokenUsage: TokenUsage? = nil,
         costEstimate: TokenCostEstimate? = nil,
+        accountTokenUsage: AccountTokenUsageSummary? = nil,
         credits: CreditBalance? = nil,
         quotaResetCredits: QuotaResetCreditSummary? = nil,
         detail: String? = nil,
@@ -239,6 +241,7 @@ public struct ProviderSnapshot: Identifiable, Hashable, Sendable {
         self.quotaWindows = quotaWindows
         self.tokenUsage = tokenUsage
         self.costEstimate = costEstimate
+        self.accountTokenUsage = accountTokenUsage
         self.credits = credits
         self.quotaResetCredits = quotaResetCredits
         self.detail = detail

@@ -460,9 +460,14 @@ final class UsageStore: ObservableObject {
     }
 
     var monthlyEstimatedSpendUSD: Double {
-        UsageCostSummary.accumulatedUSD(
-            in: self.historyRecords,
-            since: Calendar.current.dateInterval(of: .month, for: .now)?.start ?? .distantPast)
+        let startOfMonth = Calendar.current.dateInterval(of: .month, for: .now)?.start
+            ?? .distantPast
+        let recordedProviderSpend = UsageCostSummary.accumulatedUSD(
+            in: self.historyRecords.filter { $0.providerID != .codex },
+            since: startOfMonth)
+        let codexAccountReference = self.snapshots.first(where: { $0.id == .codex })?
+            .costEstimate?.amountUSD ?? 0
+        return recordedProviderSpend + codexAccountReference
     }
 
     var monthlyBudgetUSD: Double? {
