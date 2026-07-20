@@ -2,7 +2,7 @@
 
 **English** | [한국어](README.ko.md)
 
-A privacy-conscious macOS menu-bar app for checking AI coding-agent quotas, local token usage, and API-price-equivalent costs in one place.
+A privacy-conscious macOS menu-bar app for checking AI coding-agent quotas, account or local token usage, and API-price-equivalent reference costs in one place.
 
 <p align="center">
   <img src="docs/agents-status-bar.png" width="450" alt="Agents Status Bar showing Codex, Claude Code, and Gemini CLI usage" />
@@ -15,7 +15,7 @@ A privacy-conscious macOS menu-bar app for checking AI coding-agent quotas, loca
 | Area | What you can do |
 | --- | --- |
 | Quotas | See remaining percentage, reset time, provider status, model-specific limits, and Codex limit-reset credits |
-| Tokens and cost | View locally observed tokens and their estimated API-price equivalent in USD or KRW |
+| Tokens and cost | View Codex account activity for today, this month, and lifetime alongside provider-local usage, with API-equivalent reference costs in USD or KRW |
 | Menu bar | Show an icon, the lowest remaining quota, monthly estimated cost, or one selected provider |
 | Active sessions | See a fixed-width waveform pulse in the menu bar while a known local session file is being updated |
 | History | Compare quota and accumulated estimated cost over 24 hours, 7 days, or 30 days |
@@ -80,15 +80,15 @@ Claude Code may keep its OAuth credentials in macOS Keychain. Use **Settings →
 
 ## Provider support
 
-| Provider | Account quota | Local usage and cost source |
+| Provider | Account quota | Token usage and cost source |
 | --- | --- | --- |
-| Codex | Weekly and model-specific limits plus available limit-reset credits and expiration | Latest session tokens from `~/.codex/sessions`; estimated with the detected model |
+| Codex | Weekly and model-specific limits plus available limit-reset credits and expiration | Today, this month, and lifetime account token activity through the experimental Codex app-server; API-equivalent reference estimates |
 | Claude Code | 5-hour, weekly, and model-scoped limits | Today's deduplicated tokens from `~/.claude/projects`; cache-aware cost estimate |
 | Grok | Account quota unavailable | Current context usage from `~/.grok/sessions`; no cost estimate yet |
 | Gemini CLI | Account quota unavailable | Latest session tokens from `~/.gemini/tmp/*/chats`; no cost estimate yet |
 | OpenCode | Account quota unavailable | Aggregate tokens and recorded cost from `~/.local/share/opencode/opencode*.db` |
 
-Codex and Claude reuse their existing CLI sign-ins for account usage endpoints. Claude Keychain access is user-initiated from Settings and cached only in memory. If an account request fails, the app shows a stale/unavailable state or falls back to verified local data instead of inventing a quota.
+Codex and Claude reuse their existing CLI sign-ins for account usage endpoints. Codex account token activity is requested through the experimental `codex app-server` `account/usage/read` method, so both Macs should show the same activity when they use the same Codex account and workspace. Claude Keychain access is user-initiated from Settings and cached only in memory. If an account request fails, the app shows a stale/unavailable state or falls back to verified local data instead of inventing a quota.
 
 Provider CLI formats and usage endpoints are not public compatibility contracts and may change.
 
@@ -98,6 +98,7 @@ Provider CLI formats and usage endpoints are not public compatibility contracts 
 - The refresh button bypasses provider caches where supported.
 - Background refreshes never present a Keychain approval dialog.
 - Codex account responses are cached for at most one minute and are invalidated as soon as a known reset time passes.
+- Codex account token activity provides today's, this month's, and lifetime totals independently of local session files when the installed CLI supports the experimental app-server method.
 - Codex limit-reset credits are refreshed independently, cached for up to five minutes, and show the available count, title, and expiration returned by the account endpoint.
 - Activity detection checks only known session-file modification times every three seconds.
 - A session stays active for a configurable 10, 15, or 30 seconds after the latest write.
@@ -107,14 +108,18 @@ Activity is a local file-change signal. It does not guarantee that a provider is
 
 ## Cost, exchange rates, history, and budgets
 
-Cost is an estimate of what the observed tokens would cost at published API prices. It is **not** a Codex, Claude, Grok, ChatGPT, or Claude subscription charge.
+Cost is a reference estimate of what available account or local token totals might cost at published API prices. It is **not** a Codex, Claude, Grok, ChatGPT, or Claude subscription charge or an API billing statement.
+
+Codex account activity supplies aggregate token totals without the historical model, input/output, cache, or reasoning-token split needed for exact API pricing. Its today, month, and lifetime values therefore use a rough API-equivalent reference estimate; the token totals are the authoritative part of that section.
+
+The current reference profile uses the validated `gpt-5-codex` catalog price and assumes an 80% uncached-input / 20% output mix. This versioned assumption is applied consistently on every Mac; it does not describe the account's actual historical model or token mix.
 
 - Choose USD or KRW in Settings.
 - USD/KRW is checked once per Seoul calendar day through [Frankfurter](https://frankfurter.dev/) using its ECB provider.
 - The applied rate and rate date are visible in Settings; weekends and holidays may use the latest earlier ECB rate.
 - The versioned price catalog checks this repository once per day and rejects invalid schemas, unsafe prices, untrusted sources, and downgrades.
 - Usage history samples aggregate quota, token, and estimated-cost fields every 15 minutes and retains them locally for 30 days.
-- Monthly totals are reconstructed from observed cost changes, so they cover only periods recorded by the app.
+- The monthly menu and budget use Codex's current account-month reference plus locally observed cost changes from other providers.
 - Optional budget notifications fire at 50%, 80%, and 100% when notifications are enabled.
 
 Unknown models are left without a cost instead of being mapped to a guessed price. The bundled catalog follows the official [OpenAI model pricing](https://developers.openai.com/api/docs/models) and [Anthropic pricing](https://platform.claude.com/docs/en/about-claude/pricing) pages.
@@ -139,7 +144,7 @@ The app checks GitHub Releases every six hours and displays a link when a newer 
 - No prompts or model responses are displayed or retained.
 - Authentication tokens, refresh tokens, and cookies are never logged or copied into app storage.
 - Claude credentials obtained after explicit approval are cached only in memory until expiry or app exit.
-- Local parsing is limited to known aggregate usage fields and OpenCode aggregate database columns.
+- Local parsing is limited to known aggregate usage fields, activity-file metadata, and OpenCode aggregate database columns. Codex token statistics come from account activity rather than local session-token totals.
 - Activity detection reads file metadata only, not prompt or response content.
 - History contains only aggregate percentages, token totals, and estimated cost and is retained for 30 days.
 - Exchange-rate and pricing caches contain only public data and validation metadata.
@@ -151,7 +156,7 @@ The app checks GitHub Releases every six hours and displays a link when a newer 
 
 ```text
 ProviderRegistry
-    ├── CodexUsageProvider    ── account usage + ~/.codex/sessions
+    ├── CodexUsageProvider    ── account quota + app-server token activity
     ├── ClaudeUsageProvider   ── account usage + ~/.claude/projects
     ├── GrokUsageProvider     ── ~/.grok/sessions
     ├── GeminiUsageProvider   ── ~/.gemini/tmp/*/chats

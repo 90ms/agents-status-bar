@@ -80,7 +80,43 @@ struct ProviderRow: View {
                 }
             }
 
-            if !self.compact, let tokenUsage = snapshot.tokenUsage {
+            if !self.compact, let accountUsage = snapshot.accountTokenUsage {
+                let referenceCosts = AccountTokenReferenceCostEstimator
+                    .codexInputOutputReferenceV1()
+                    .map { $0.estimate(summary: accountUsage) }
+                VStack(alignment: .leading, spacing: 6) {
+                    Label(
+                        AppLocalization.string("usage.accountTokens.title"),
+                        systemImage: "chart.bar.xaxis")
+                        .font(.caption)
+
+                    self.accountTokenUsageRow(
+                        labelKey: "usage.accountTokens.today",
+                        tokens: accountUsage.todayTokens,
+                        costUSD: referenceCosts?.today?.amountUSD)
+                    self.accountTokenUsageRow(
+                        labelKey: "usage.accountTokens.month",
+                        tokens: accountUsage.currentMonthTokens,
+                        costUSD: referenceCosts?.currentMonth.amountUSD)
+                    self.accountTokenUsageRow(
+                        labelKey: "usage.accountTokens.lifetime",
+                        tokens: accountUsage.lifetimeTokens,
+                        costUSD: referenceCosts?.lifetime.amountUSD)
+
+                    if let latestBucketDate = accountUsage.latestBucketDate {
+                        Text(AppLocalization.format(
+                            "usage.accountTokens.dataThrough",
+                            latestBucketDate))
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+            }
+
+            if !self.compact,
+               snapshot.accountTokenUsage == nil,
+               let tokenUsage = snapshot.tokenUsage
+            {
                 HStack {
                     Text(tokenUsage.label)
                     Spacer()
@@ -93,6 +129,7 @@ struct ProviderRow: View {
             }
 
             if !self.compact,
+               snapshot.accountTokenUsage == nil,
                let estimate = snapshot.costEstimate,
                let formattedCost = self.formattedCost(estimate.amountUSD)
             {
@@ -149,6 +186,44 @@ struct ProviderRow: View {
         case ..<10: .red
         case ..<30: .orange
         default: .accentColor
+        }
+    }
+
+    @ViewBuilder
+    private func accountTokenUsageRow(
+        labelKey: String,
+        tokens: Int64?,
+        costUSD: Double?) -> some View
+    {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack {
+                Text(AppLocalization.string(labelKey))
+                Spacer()
+                if let tokens {
+                    Text(tokens.formatted(.number.notation(.compactName)))
+                        .monospacedDigit()
+                    Text(AppLocalization.string("usage.tokens"))
+                } else {
+                    Text(AppLocalization.string("usage.accountTokens.unavailable"))
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+
+            if let costUSD,
+               let formattedCost = self.formattedCost(costUSD)
+            {
+                HStack {
+                    Spacer()
+                    Text(AppLocalization.format(
+                        "usage.accountTokens.referenceCost",
+                        formattedCost))
+                        .monospacedDigit()
+                }
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .help(AppLocalization.string("usage.accountTokens.costDisclaimer"))
+            }
         }
     }
 
