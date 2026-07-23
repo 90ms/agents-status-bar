@@ -12,7 +12,7 @@ struct ProviderRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: self.compact ? 5 : 9) {
             HStack(spacing: 8) {
-                Image(systemName: self.snapshot.descriptor.systemImage)
+                ProviderIcon(descriptor: self.snapshot.descriptor)
                     .frame(width: 18)
                 Text(self.snapshot.descriptor.displayName)
                     .font(.headline)

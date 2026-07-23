@@ -27,7 +27,7 @@ AI 코딩 에이전트의 남은 쿼터, 계정 또는 로컬 토큰 사용량, 
 
 ## 설치
 
-현재 배포된 미리보기 버전은 `v0.5.0`입니다. macOS 14 이상과 Apple Silicon이 필요합니다.
+현재 배포된 미리보기 버전은 `v0.5.1`입니다. macOS 14 이상과 Apple Silicon이 필요합니다.
 
 ### Homebrew
 
@@ -46,7 +46,7 @@ brew untap 90ms/agents-status-bar
 
 ### GitHub Release
 
-[Releases](https://github.com/90ms/agents-status-bar/releases)에서 `AgentsStatusBar-0.5.0.zip`을 내려받아 압축을 풀고 `Agents Status Bar.app`을 `/Applications`로 옮깁니다.
+[Releases](https://github.com/90ms/agents-status-bar/releases)에서 `AgentsStatusBar-0.5.1.zip`을 내려받아 압축을 풀고 `Agents Status Bar.app`을 `/Applications`로 옮깁니다.
 
 현재 미리보기는 Developer ID 인증서를 사용하지 않는 ad-hoc 서명 빌드입니다. 처음 실행할 때 **시스템 설정 → 개인정보 보호 및 보안**에서 실행을 허용해야 할 수 있습니다.
 

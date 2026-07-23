@@ -73,7 +73,18 @@ struct HistoryView: View {
                         set: { self.selectedProviderID = $0 }))
                 {
                     ForEach(self.availableProviders, id: \.id) { provider in
-                        Text(provider.name).tag(Optional(provider.id))
+                        if let descriptor = self.store.descriptors.first(where: {
+                            $0.id == provider.id
+                        }) {
+                            Label {
+                                Text(provider.name)
+                            } icon: {
+                                ProviderIcon(descriptor: descriptor)
+                            }
+                            .tag(Optional(provider.id))
+                        } else {
+                            Text(provider.name).tag(Optional(provider.id))
+                        }
                     }
                 }
                 .frame(width: 220)

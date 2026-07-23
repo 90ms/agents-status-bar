@@ -6,6 +6,7 @@ public struct GrokUsageProvider: UsageProviding, UsageActivityProviding {
         displayName: "Grok",
         shortName: "Grok",
         systemImage: "xmark",
+        iconAssetName: "grok",
         capabilities: .init(
             supportsQuotaWindows: true,
             supportsTokenUsage: true))

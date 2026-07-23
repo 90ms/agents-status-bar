@@ -6,6 +6,7 @@ public struct GeminiUsageProvider: UsageProviding, UsageActivityProviding {
         displayName: "Gemini CLI",
         shortName: "Gemini",
         systemImage: "diamond.fill",
+        iconAssetName: "gemini",
         capabilities: .init(supportsTokenUsage: true))
 
     private let temporaryDirectory: URL

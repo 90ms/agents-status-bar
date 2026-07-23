@@ -6,6 +6,7 @@ public struct CodexUsageProvider: UsageProviding, UsageActivityProviding, UsageC
         displayName: "Codex",
         shortName: "Codex",
         systemImage: "chevron.left.forwardslash.chevron.right",
+        iconAssetName: "openai",
         capabilities: .init(
             supportsQuotaWindows: true,
             supportsTokenUsage: true,

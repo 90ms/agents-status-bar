@@ -63,7 +63,11 @@ struct SettingsView: View {
                         get: { self.store.isEnabled(descriptor.id) },
                         set: { self.store.setEnabled($0, for: descriptor.id) }))
                     {
-                        Label(descriptor.displayName, systemImage: descriptor.systemImage)
+                        Label {
+                            Text(descriptor.displayName)
+                        } icon: {
+                            ProviderIcon(descriptor: descriptor)
+                        }
                     }
                 }
             }
@@ -73,7 +77,11 @@ struct SettingsView: View {
                     ForEach(self.store.authorizationDescriptors) { descriptor in
                         VStack(alignment: .leading, spacing: 6) {
                             HStack {
-                                Label(descriptor.displayName, systemImage: descriptor.systemImage)
+                                Label {
+                                    Text(descriptor.displayName)
+                                } icon: {
+                                    ProviderIcon(descriptor: descriptor)
+                                }
                                 Spacer()
                                 if self.store.authorizingProviderIDs.contains(descriptor.id) {
                                     ProgressView()
@@ -117,7 +125,12 @@ struct SettingsView: View {
                             set: { self.store.setSelectedMenuBarProviderID($0) }))
                     {
                         ForEach(self.store.descriptors) { descriptor in
-                            Text(descriptor.displayName).tag(descriptor.id)
+                            Label {
+                                Text(descriptor.displayName)
+                            } icon: {
+                                ProviderIcon(descriptor: descriptor)
+                            }
+                            .tag(descriptor.id)
                         }
                     }
 
@@ -279,9 +292,13 @@ struct SettingsView: View {
                             get: { self.store.isNotificationEnabled(for: descriptor.id) },
                             set: { self.store.setNotificationEnabled($0, for: descriptor.id) }))
                         {
-                            Text(AppLocalization.format(
-                                "settings.notifications.provider",
-                                descriptor.displayName))
+                            Label {
+                                Text(AppLocalization.format(
+                                    "settings.notifications.provider",
+                                    descriptor.displayName))
+                            } icon: {
+                                ProviderIcon(descriptor: descriptor)
+                            }
                         }
                     }
                 }

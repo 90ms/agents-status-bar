@@ -27,7 +27,7 @@ All quota percentages are displayed as **remaining values** (`% left`), not cons
 
 ## Install
 
-The latest packaged preview is `v0.5.0`. It requires macOS 14 or later and Apple silicon.
+The latest packaged preview is `v0.5.1`. It requires macOS 14 or later and Apple silicon.
 
 ### Homebrew
 
@@ -46,7 +46,7 @@ brew untap 90ms/agents-status-bar
 
 ### GitHub Release
 
-Download `AgentsStatusBar-0.5.0.zip` from [Releases](https://github.com/90ms/agents-status-bar/releases), unzip it, and move `Agents Status Bar.app` to `/Applications`.
+Download `AgentsStatusBar-0.5.1.zip` from [Releases](https://github.com/90ms/agents-status-bar/releases), unzip it, and move `Agents Status Bar.app` to `/Applications`.
 
 The preview is ad-hoc signed because it does not yet use a Developer ID certificate. On first launch, macOS may require approval in **System Settings → Privacy & Security**.
 

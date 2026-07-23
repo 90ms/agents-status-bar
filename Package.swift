@@ -20,6 +20,7 @@ let package = Package(
             name: "AgentsStatusBar",
             dependencies: ["AgentsStatusCore"],
             exclude: ["Resources"],
+            resources: [.copy("BrandIcons")],
             swiftSettings: [.enableUpcomingFeature("StrictConcurrency")]),
         .testTarget(
             name: "AgentsStatusCoreTests",

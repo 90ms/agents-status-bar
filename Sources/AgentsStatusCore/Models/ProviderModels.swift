@@ -45,6 +45,7 @@ public struct ProviderDescriptor: Identifiable, Hashable, Sendable {
     public let displayName: String
     public let shortName: String
     public let systemImage: String
+    public let iconAssetName: String?
     public let capabilities: ProviderCapabilities
 
     public init(
@@ -52,12 +53,14 @@ public struct ProviderDescriptor: Identifiable, Hashable, Sendable {
         displayName: String,
         shortName: String,
         systemImage: String,
+        iconAssetName: String? = nil,
         capabilities: ProviderCapabilities)
     {
         self.id = id
         self.displayName = displayName
         self.shortName = shortName
         self.systemImage = systemImage
+        self.iconAssetName = iconAssetName
         self.capabilities = capabilities
     }
 }

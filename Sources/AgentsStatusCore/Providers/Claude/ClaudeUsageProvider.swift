@@ -8,6 +8,7 @@ public struct ClaudeUsageProvider: UsageProviding, UsageActivityProviding,
         displayName: "Claude Code",
         shortName: "Claude",
         systemImage: "sparkles",
+        iconAssetName: "claude",
         capabilities: .init(supportsTokenUsage: true))
 
     private let projectsDirectory: URL

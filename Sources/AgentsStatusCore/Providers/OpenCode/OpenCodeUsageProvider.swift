@@ -6,6 +6,7 @@ public struct OpenCodeUsageProvider: UsageProviding, UsageActivityProviding {
         displayName: "OpenCode",
         shortName: "OpenCode",
         systemImage: "terminal",
+        iconAssetName: "opencode",
         capabilities: .init(supportsTokenUsage: true))
 
     private let dataDirectory: URL
