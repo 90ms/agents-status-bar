@@ -258,10 +258,32 @@ struct ProviderParserTests {
         let data = try Data(contentsOf: file)
         let response = try JSONDecoder().decode(ClaudeOAuthUsageResponse.self, from: data)
         let windows = response.quotaWindows()
+        let snapshot = ProviderSnapshot(
+            descriptor: ClaudeUsageProvider().descriptor,
+            availability: .available,
+            source: .officialAPI,
+            quotaWindows: windows)
 
         #expect(windows.map(\.label) == ["5-hour", "Weekly", "Fable weekly"])
+        #expect(windows.map(\.id) == ["five-hour", "seven-day", "scoped-weekly-fable"])
         #expect(windows.map(\.usedPercent) == [12, 34, 25])
         #expect(windows.allSatisfy { $0.resetsAt != nil })
+        #expect(UsageSummary.remainingPercent(
+            in: [snapshot],
+            for: .claude,
+            windowID: "five-hour") == 88)
+        #expect(UsageSummary.remainingPercent(
+            in: [snapshot],
+            for: .claude,
+            windowID: "seven-day") == 66)
+        #expect(UsageSummary.remainingPercent(
+            in: [snapshot],
+            for: .claude,
+            windowID: "scoped-weekly-fable") == 75)
+        #expect(UsageSummary.remainingPercent(
+            in: [snapshot],
+            for: .claude,
+            windowID: "missing-window") == nil)
     }
 
     @Test

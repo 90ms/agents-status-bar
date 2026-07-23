@@ -15,4 +15,16 @@ public enum UsageSummary {
     {
         self.minimumRemainingPercent(in: snapshots.filter { $0.id == providerID })
     }
+
+    public static func remainingPercent(
+        in snapshots: [ProviderSnapshot],
+        for providerID: ProviderID,
+        windowID: String) -> Double?
+    {
+        snapshots
+            .first { $0.id == providerID && $0.availability == .available }?
+            .quotaWindows
+            .first { $0.id == windowID }?
+            .remainingPercent
+    }
 }

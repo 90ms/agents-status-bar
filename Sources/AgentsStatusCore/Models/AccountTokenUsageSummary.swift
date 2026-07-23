@@ -15,6 +15,7 @@ public struct AccountDailyTokenBucket: Codable, Hashable, Sendable {
 /// Provider-account totals aligned to one explicit local calendar boundary.
 public struct AccountTokenUsageSummary: Hashable, Sendable {
     public let todayTokens: Int64?
+    public let latestDailyTokens: Int64?
     public let currentMonthTokens: Int64
     public let lifetimeTokens: Int64
     public let localDate: String
@@ -24,6 +25,7 @@ public struct AccountTokenUsageSummary: Hashable, Sendable {
 
     public init(
         todayTokens: Int64?,
+        latestDailyTokens: Int64? = nil,
         currentMonthTokens: Int64,
         lifetimeTokens: Int64,
         localDate: String,
@@ -32,6 +34,7 @@ public struct AccountTokenUsageSummary: Hashable, Sendable {
         didClampOverflow: Bool = false)
     {
         self.todayTokens = todayTokens.map { max($0, 0) }
+        self.latestDailyTokens = latestDailyTokens.map { max($0, 0) }
         self.currentMonthTokens = max(currentMonthTokens, 0)
         self.lifetimeTokens = max(lifetimeTokens, 0)
         self.localDate = localDate
@@ -59,6 +62,7 @@ public enum AccountTokenUsageAggregator {
         let today = calendar.dateComponents([.year, .month, .day], from: now)
         let todayKey = self.dateKey(today)
         var todayTokens: Int64?
+        var latestDailyTokens: Int64?
         var currentMonthTokens: Int64 = 0
         var latestBucketDate: String?
         var discardedBucketCount = 0
@@ -73,12 +77,13 @@ public enum AccountTokenUsageAggregator {
                 continue
             }
 
-            if let latest = latestBucketDate {
-                if bucket.startDate > latest {
-                    latestBucketDate = bucket.startDate
-                }
-            } else {
+            if latestBucketDate.map({ bucket.startDate > $0 }) != false {
                 latestBucketDate = bucket.startDate
+                latestDailyTokens = bucket.tokenCount
+            } else if bucket.startDate == latestBucketDate {
+                let addition = self.saturatedAdd(latestDailyTokens ?? 0, bucket.tokenCount)
+                latestDailyTokens = addition.value
+                didClampOverflow = didClampOverflow || addition.didClamp
             }
 
             if self.isSameDay(components, today) {
@@ -95,6 +100,7 @@ public enum AccountTokenUsageAggregator {
 
         return AccountTokenUsageSummary(
             todayTokens: todayTokens,
+            latestDailyTokens: latestDailyTokens,
             currentMonthTokens: currentMonthTokens,
             lifetimeTokens: lifetimeTokens,
             localDate: todayKey,

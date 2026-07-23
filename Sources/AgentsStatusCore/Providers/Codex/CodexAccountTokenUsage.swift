@@ -199,7 +199,7 @@ struct CodexAccountTokenUsageClient: Sendable {
 
 private final class CodexAppServerUsageRunner: @unchecked Sendable {
     private static let initializeRequest = Data(
-        #"{"id":1,"method":"initialize","params":{"clientInfo":{"name":"agents-status-bar","version":"0.4.1"},"capabilities":{"experimentalApi":true}}}"#.utf8)
+        #"{"id":1,"method":"initialize","params":{"clientInfo":{"name":"agents-status-bar","version":"0.5.0"},"capabilities":{"experimentalApi":true}}}"#.utf8)
     private static let initializedNotification = Data(#"{"method":"initialized"}"#.utf8)
     private static let usageRequest = Data(
         #"{"id":2,"method":"account/usage/read","params":null}"#.utf8)

@@ -16,6 +16,8 @@
 "usage.apiCostEstimate" = "API 비용 추정";
 "usage.accountTokens.title" = "계정 토큰 사용량";
 "usage.accountTokens.today" = "오늘";
+"usage.accountTokens.latestDaily" = "최근 일일 사용량 (%@)";
+"usage.accountTokens.latestDailyUnavailable" = "최근 일일 사용량";
 "usage.accountTokens.month" = "이번 달";
 "usage.accountTokens.lifetime" = "누적";
 "usage.accountTokens.referenceCost" = "API 환산 참고 비용: %@";
@@ -59,6 +61,10 @@
 "settings.menuBar.mode.monthlyCost" = "월 예상 비용";
 "settings.menuBar.mode.selectedProvider" = "선택한 제공자 잔여량";
 "settings.menuBar.provider" = "제공자";
+"settings.menuBar.claudeQuota" = "Claude 쿼터";
+"settings.menuBar.claudeQuota.fiveHour" = "5시간";
+"settings.menuBar.claudeQuota.weekly" = "일주일";
+"settings.menuBar.claudeQuota.fable" = "Fable";
 "settings.menuBar.compact" = "컴팩트 팝오버";
 "settings.menuBar.compact.description" = "핵심 쿼터만 표시하고 토큰, 비용, 상세 및 출처 행을 숨깁니다.";
 "settings.activity.enabled" = "활동 중인 세션 애니메이션";

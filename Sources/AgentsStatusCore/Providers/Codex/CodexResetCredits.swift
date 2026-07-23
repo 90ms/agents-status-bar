@@ -113,7 +113,7 @@ struct CodexResetCreditsClient: Sendable {
         request.timeoutInterval = 20
         request.setValue("Bearer \(credentials.accessToken)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue("agents-status-bar/0.4.1", forHTTPHeaderField: "User-Agent")
+        request.setValue("agents-status-bar/0.5.0", forHTTPHeaderField: "User-Agent")
         if let accountID = credentials.accountID {
             request.setValue(accountID, forHTTPHeaderField: "ChatGPT-Account-Id")
         }

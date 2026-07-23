@@ -91,25 +91,23 @@ struct ProviderRow: View {
                         .font(.caption)
 
                     self.accountTokenUsageRow(
-                        labelKey: "usage.accountTokens.today",
-                        tokens: accountUsage.todayTokens,
-                        costUSD: referenceCosts?.today?.amountUSD)
+                        label: accountUsage.latestBucketDate.map {
+                            AppLocalization.format("usage.accountTokens.latestDaily", $0)
+                        } ?? AppLocalization.string("usage.accountTokens.latestDailyUnavailable"),
+                        tokens: accountUsage.latestDailyTokens,
+                        costUSD: accountUsage.latestDailyTokens.flatMap {
+                            AccountTokenReferenceCostEstimator
+                                .codexInputOutputReferenceV1()?
+                                .estimate(tokenCount: $0).amountUSD
+                        })
                     self.accountTokenUsageRow(
-                        labelKey: "usage.accountTokens.month",
+                        label: AppLocalization.string("usage.accountTokens.month"),
                         tokens: accountUsage.currentMonthTokens,
                         costUSD: referenceCosts?.currentMonth.amountUSD)
                     self.accountTokenUsageRow(
-                        labelKey: "usage.accountTokens.lifetime",
+                        label: AppLocalization.string("usage.accountTokens.lifetime"),
                         tokens: accountUsage.lifetimeTokens,
                         costUSD: referenceCosts?.lifetime.amountUSD)
-
-                    if let latestBucketDate = accountUsage.latestBucketDate {
-                        Text(AppLocalization.format(
-                            "usage.accountTokens.dataThrough",
-                            latestBucketDate))
-                            .font(.caption2)
-                            .foregroundStyle(.tertiary)
-                    }
                 }
             }
 
@@ -191,13 +189,13 @@ struct ProviderRow: View {
 
     @ViewBuilder
     private func accountTokenUsageRow(
-        labelKey: String,
+        label: String,
         tokens: Int64?,
         costUSD: Double?) -> some View
     {
         VStack(alignment: .leading, spacing: 2) {
             HStack {
-                Text(AppLocalization.string(labelKey))
+                Text(label)
                 Spacer()
                 if let tokens {
                     Text(tokens.formatted(.number.notation(.compactName)))

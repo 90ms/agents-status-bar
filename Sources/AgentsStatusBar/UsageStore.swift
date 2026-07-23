@@ -16,6 +16,7 @@ final class UsageStore: ObservableObject {
     @Published private(set) var providerAuthorizationMessages: [ProviderID: String]
     @Published private(set) var menuBarDisplayMode: MenuBarDisplayMode
     @Published private(set) var selectedMenuBarProviderID: ProviderID
+    @Published private(set) var claudeMenuBarQuota: ClaudeMenuBarQuota
     @Published private(set) var compactModeEnabled: Bool
     @Published private(set) var activityAnimationsEnabled: Bool
     @Published private(set) var activityWindowSeconds: Int
@@ -50,6 +51,7 @@ final class UsageStore: ObservableObject {
     private static let legacyShowsRemainingInMenuBarKey = "showsRemainingInMenuBar"
     private static let menuBarDisplayModeKey = "menuBarDisplayMode"
     private static let selectedMenuBarProviderIDKey = "selectedMenuBarProviderID"
+    private static let claudeMenuBarQuotaKey = "claudeMenuBarQuota"
     private static let compactModeEnabledKey = "compactModeEnabled"
     private static let activityAnimationsEnabledKey = "activityAnimationsEnabled"
     private static let activityWindowSecondsKey = "activityWindowSeconds"
@@ -101,6 +103,9 @@ final class UsageStore: ObservableObject {
             .flatMap { knownIDs.contains($0) ? $0 : nil }
             ?? providers.first?.descriptor.id
             ?? .codex
+        self.claudeMenuBarQuota = UserDefaults.standard.string(
+            forKey: Self.claudeMenuBarQuotaKey)
+            .flatMap(ClaudeMenuBarQuota.init(rawValue:)) ?? .fable
         self.compactModeEnabled = UserDefaults.standard.bool(forKey: Self.compactModeEnabledKey)
         self.activityAnimationsEnabled = UserDefaults.standard.object(
             forKey: Self.activityAnimationsEnabledKey) as? Bool ?? true
@@ -376,6 +381,11 @@ final class UsageStore: ObservableObject {
         UserDefaults.standard.set(id.rawValue, forKey: Self.selectedMenuBarProviderIDKey)
     }
 
+    func setClaudeMenuBarQuota(_ quota: ClaudeMenuBarQuota) {
+        self.claudeMenuBarQuota = quota
+        UserDefaults.standard.set(quota.rawValue, forKey: Self.claudeMenuBarQuotaKey)
+    }
+
     func setCompactModeEnabled(_ enabled: Bool) {
         self.compactModeEnabled = enabled
         UserDefaults.standard.set(enabled, forKey: Self.compactModeEnabledKey)
@@ -424,7 +434,13 @@ final class UsageStore: ObservableObject {
     }
 
     var selectedMenuBarProviderRemainingPercent: Double? {
-        UsageSummary.minimumRemainingPercent(
+        if self.selectedMenuBarProviderID == .claude {
+            return UsageSummary.remainingPercent(
+                in: self.snapshots,
+                for: .claude,
+                windowID: self.claudeMenuBarQuota.windowID)
+        }
+        return UsageSummary.minimumRemainingPercent(
             in: self.snapshots,
             for: self.selectedMenuBarProviderID)
     }

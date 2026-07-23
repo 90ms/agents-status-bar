@@ -120,6 +120,19 @@ struct SettingsView: View {
                             Text(descriptor.displayName).tag(descriptor.id)
                         }
                     }
+
+                    if self.store.selectedMenuBarProviderID == .claude {
+                        Picker(
+                            AppLocalization.string("settings.menuBar.claudeQuota"),
+                            selection: Binding(
+                                get: { self.store.claudeMenuBarQuota },
+                                set: { self.store.setClaudeMenuBarQuota($0) }))
+                        {
+                            ForEach(ClaudeMenuBarQuota.allCases) { quota in
+                                Text(quota.localizedName).tag(quota)
+                            }
+                        }
+                    }
                 }
 
                 Toggle(isOn: Binding(

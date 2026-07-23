@@ -23,6 +23,7 @@ struct AccountTokenUsageSummaryTests {
             timeZone: self.seoul)
 
         #expect(summary.todayTokens == 50)
+        #expect(summary.latestDailyTokens == 50)
         #expect(summary.currentMonthTokens == 150)
         #expect(summary.lifetimeTokens == 5_000)
         #expect(summary.localDate == "2026-07-21")
@@ -32,7 +33,7 @@ struct AccountTokenUsageSummaryTests {
     }
 
     @Test
-    func missingTodayProducesNilWithoutDiscardingOlderBuckets() throws {
+    func missingTodayKeepsTheLatestDailyBucketVisible() throws {
         let now = try #require(ISO8601DateFormatter().date(from: "2026-07-21T12:00:00Z"))
         let summary = AccountTokenUsageAggregator.summarize(
             dailyBuckets: [
@@ -44,6 +45,7 @@ struct AccountTokenUsageSummaryTests {
             timeZone: self.seoul)
 
         #expect(summary.todayTokens == nil)
+        #expect(summary.latestDailyTokens == 60)
         #expect(summary.currentMonthTokens == 100)
         #expect(summary.latestBucketDate == "2026-07-20")
         #expect(summary.discardedBucketCount == 0)
@@ -70,8 +72,10 @@ struct AccountTokenUsageSummaryTests {
 
         #expect(seoul.localDate == "2026-07-21")
         #expect(seoul.todayTokens == 21)
+        #expect(seoul.latestDailyTokens == 21)
         #expect(losAngeles.localDate == "2026-07-20")
         #expect(losAngeles.todayTokens == 20)
+        #expect(losAngeles.latestDailyTokens == 20)
         #expect(losAngeles.discardedBucketCount == 1)
     }
 
@@ -91,6 +95,7 @@ struct AccountTokenUsageSummaryTests {
             timeZone: self.seoul)
 
         #expect(summary.todayTokens == .max)
+        #expect(summary.latestDailyTokens == .max)
         #expect(summary.currentMonthTokens == .max)
         #expect(summary.lifetimeTokens == 0)
         #expect(summary.discardedBucketCount == 3)

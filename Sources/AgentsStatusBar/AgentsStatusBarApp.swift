@@ -3,6 +3,7 @@ import SwiftUI
 
 @main
 struct AgentsStatusBarApp: App {
+    @Environment(\.openSettings) private var openSettings
     @StateObject private var store = UsageStore()
 
     var body: some Scene {
@@ -59,7 +60,13 @@ struct AgentsStatusBarApp: App {
                 Divider()
                     .padding(.vertical, 8)
                 HStack {
-                    SettingsLink { Text(AppLocalization.string("action.settings")) }
+                    Button(AppLocalization.string("action.settings")) {
+                        self.openSettings()
+                        Task { @MainActor in
+                            await Task.yield()
+                            NSApplication.shared.activate(ignoringOtherApps: true)
+                        }
+                    }
                     Spacer()
                     Button(AppLocalization.string("action.quit")) { NSApplication.shared.terminate(nil) }
                 }
@@ -75,6 +82,7 @@ struct AgentsStatusBarApp: App {
 
         Settings {
             SettingsView(store: self.store)
+                .background(SettingsWindowFocusView())
         }
 
         Window(AppLocalization.string("history.title"), id: "usage-history") {
@@ -139,6 +147,27 @@ struct AgentsStatusBarApp: App {
     private func menuBarIcon(for remaining: Double?) -> String {
         guard let remaining else { return "chart.bar.fill" }
         return remaining < 10 ? "exclamationmark.triangle.fill" : "chart.bar.fill"
+    }
+}
+
+private struct SettingsWindowFocusView: NSViewRepresentable {
+    func makeNSView(context: Context) -> SettingsWindowFocusNSView {
+        SettingsWindowFocusNSView()
+    }
+
+    func updateNSView(_ nsView: SettingsWindowFocusNSView, context: Context) {}
+}
+
+private final class SettingsWindowFocusNSView: NSView {
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        guard let window else { return }
+
+        DispatchQueue.main.async { [weak window] in
+            guard let window else { return }
+            NSApplication.shared.activate(ignoringOtherApps: true)
+            window.makeKeyAndOrderFront(nil)
+        }
     }
 }
 

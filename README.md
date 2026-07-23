@@ -15,8 +15,8 @@ A privacy-conscious macOS menu-bar app for checking AI coding-agent quotas, acco
 | Area | What you can do |
 | --- | --- |
 | Quotas | See remaining percentage, reset time, provider status, model-specific limits, and Codex limit-reset credits |
-| Tokens and cost | View Codex account activity for today, this month, and lifetime alongside provider-local usage, with API-equivalent reference costs in USD or KRW |
-| Menu bar | Show an icon, the lowest remaining quota, monthly estimated cost, or one selected provider |
+| Tokens and cost | View Codex's latest available daily, current-month, and lifetime account activity alongside provider-local usage, with API-equivalent reference costs in USD or KRW |
+| Menu bar | Show an icon, the lowest remaining quota, monthly estimated cost, or one selected provider; Claude can use its 5-hour, weekly, or Fable quota |
 | Active sessions | See a fixed-width waveform pulse in the menu bar while a known local session file is being updated |
 | History | Compare quota and accumulated estimated cost over 24 hours, 7 days, or 30 days |
 | Alerts and budget | Configure provider-specific warning/critical thresholds and optional monthly budget alerts |
@@ -27,7 +27,7 @@ All quota percentages are displayed as **remaining values** (`% left`), not cons
 
 ## Install
 
-The latest packaged preview is `v0.4.1`. It requires macOS 14 or later and Apple silicon.
+The latest packaged preview is `v0.5.0`. It requires macOS 14 or later and Apple silicon.
 
 ### Homebrew
 
@@ -46,7 +46,7 @@ brew untap 90ms/agents-status-bar
 
 ### GitHub Release
 
-Download `AgentsStatusBar-0.4.1.zip` from [Releases](https://github.com/90ms/agents-status-bar/releases), unzip it, and move `Agents Status Bar.app` to `/Applications`.
+Download `AgentsStatusBar-0.5.0.zip` from [Releases](https://github.com/90ms/agents-status-bar/releases), unzip it, and move `Agents Status Bar.app` to `/Applications`.
 
 The preview is ad-hoc signed because it does not yet use a Developer ID certificate. On first launch, macOS may require approval in **System Settings → Privacy & Security**.
 
@@ -82,7 +82,7 @@ Claude Code may keep its OAuth credentials in macOS Keychain. Use **Settings →
 
 | Provider | Account quota | Token usage and cost source |
 | --- | --- | --- |
-| Codex | Weekly and model-specific limits plus available limit-reset credits and expiration | Today, this month, and lifetime account token activity through the experimental Codex app-server; API-equivalent reference estimates |
+| Codex | Weekly and model-specific limits plus available limit-reset credits and expiration | Latest available daily, current-month, and lifetime account token activity through the experimental Codex app-server; API-equivalent reference estimates |
 | Claude Code | 5-hour, weekly, and model-scoped limits | Today's deduplicated tokens from `~/.claude/projects`; cache-aware cost estimate |
 | Grok | Account quota unavailable | Current context usage from `~/.grok/sessions`; no cost estimate yet |
 | Gemini CLI | Account quota unavailable | Latest session tokens from `~/.gemini/tmp/*/chats`; no cost estimate yet |
@@ -98,7 +98,8 @@ Provider CLI formats and usage endpoints are not public compatibility contracts 
 - The refresh button bypasses provider caches where supported.
 - Background refreshes never present a Keychain approval dialog.
 - Codex account responses are cached for at most one minute and are invalidated as soon as a known reset time passes.
-- Codex account token activity provides today's, this month's, and lifetime totals independently of local session files when the installed CLI supports the experimental app-server method.
+- Codex account token activity provides the latest available daily bucket, current-month buckets, and lifetime total independently of local session files when the installed CLI supports the experimental app-server method.
+- The latest daily row includes its account-bucket date and remains visible after the local calendar day changes, so a delayed Codex bucket is not lost behind a perpetually pending “Today” row.
 - Codex limit-reset credits are refreshed independently, cached for up to five minutes, and show the available count, title, and expiration returned by the account endpoint.
 - Activity detection checks only known session-file modification times every three seconds.
 - A session stays active for a configurable 10, 15, or 30 seconds after the latest write.
@@ -110,7 +111,7 @@ Activity is a local file-change signal. It does not guarantee that a provider is
 
 Cost is a reference estimate of what available account or local token totals might cost at published API prices. It is **not** a Codex, Claude, Grok, ChatGPT, or Claude subscription charge or an API billing statement.
 
-Codex account activity supplies aggregate token totals without the historical model, input/output, cache, or reasoning-token split needed for exact API pricing. Its today, month, and lifetime values therefore use a rough API-equivalent reference estimate; the token totals are the authoritative part of that section.
+Codex account activity supplies aggregate token totals without the historical model, input/output, cache, or reasoning-token split needed for exact API pricing. Its latest-daily, month, and lifetime values therefore use a rough API-equivalent reference estimate; the token totals are the authoritative part of that section.
 
 The current reference profile uses the validated `gpt-5-codex` catalog price and assumes an 80% uncached-input / 20% output mix. This versioned assumption is applied consistently on every Mac; it does not describe the account's actual historical model or token mix.
 
@@ -128,12 +129,14 @@ Unknown models are left without a cost instead of being mapped to a guessed pric
 
 | Tab | Options |
 | --- | --- |
-| General | UI language, enabled providers, provider connections, menu-bar label, selected provider, compact mode, activity animation/window, launch at login, update check |
+| General | UI language, enabled providers, provider connections, menu-bar label, selected provider, Claude menu-bar quota (5-hour/weekly/Fable), compact mode, activity animation/window, launch at login, update check |
 | Alerts | Low-usage notifications, warning and critical thresholds, provider selection, test notification |
 | Usage | USD/KRW display, applied exchange rate, price-catalog update, monthly budget, usage-history window |
 | Privacy | Local-data explanation and copyable provider diagnostics |
 
 The UI language can follow the system or be set explicitly to English or Korean.
+
+See the [usage display guide](docs/usage.md) for the exact Codex bucket and Claude menu-bar selection behavior.
 
 ## Updates
 
